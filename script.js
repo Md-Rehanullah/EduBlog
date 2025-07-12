@@ -343,7 +343,7 @@ function handlePasswordSubmit(e) {
     e.preventDefault();
     const password = document.getElementById('password').value;
     
-    if (password === 'admin123') {
+    if (password === 'kaalel') {
         isAuthenticated = true;
         localStorage.setItem('isAuthenticated', 'true');
         updateAuthUI();
