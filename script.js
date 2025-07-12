@@ -215,7 +215,7 @@ For more information and direct links to applications, visit our scholarship res
 
     try {
         // Try to load posts from GitHub Gist
-        const response = await fetch('https://api.github.com/gists/YOUR_GIST_ID');
+        const response = await fetch('https://api.github.com/gists/f337ff0594fcb491caeb05a1a05e516a');
         if (response.ok) {
             const gistData = await response.json();
             const postsContent = gistData.files['edublog-posts.json'].content;
@@ -356,7 +356,7 @@ function handlePasswordSubmit(e) {
     e.preventDefault();
     const password = document.getElementById('password').value;
     
-    if (password === 'admin123') {
+    if (password === 'kaalel') {
         isAuthenticated = true;
         localStorage.setItem('isAuthenticated', 'true');
         updateAuthUI();
@@ -496,7 +496,7 @@ Sent from EduBlog contact form at ${new Date(messageData.timestamp).toLocaleStri
     };
 
     // Using a free email service API (Formspree)
-    const response = await fetch('https://formspree.io/f/xdkovnqj', {
+    const response = await fetch('https://formspree.io/f/xzzgnnod', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
