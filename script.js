@@ -15,9 +15,9 @@ function initializeApp() {
     console.log('EduBlog application initialized');
 }
 
-// Load sample data
-function loadSampleData() {
-    // Sample posts data
+// Load sample data and posts from GitHub Gist
+async function loadSampleData() {
+    // Sample posts data (fallback)
     const samplePosts = [
         {
             id: 1,
@@ -213,13 +213,26 @@ For more information and direct links to applications, visit our scholarship res
         }
     ];
 
-    // Load posts from localStorage or use sample data
-    const savedPosts = localStorage.getItem('edublog-posts');
-    if (savedPosts) {
-        posts = JSON.parse(savedPosts);
-    } else {
-        posts = samplePosts;
-        localStorage.setItem('edublog-posts', JSON.stringify(posts));
+    try {
+        // Try to load posts from GitHub Gist
+        const response = await fetch('https://api.github.com/gists/YOUR_GIST_ID');
+        if (response.ok) {
+            const gistData = await response.json();
+            const postsContent = gistData.files['edublog-posts.json'].content;
+            posts = JSON.parse(postsContent);
+        } else {
+            throw new Error('Gist not found');
+        }
+    } catch (error) {
+        console.log('Loading from gist failed, using sample data');
+        // Fallback: load from localStorage or use sample data
+        const savedPosts = localStorage.getItem('edublog-posts');
+        if (savedPosts) {
+            posts = JSON.parse(savedPosts);
+        } else {
+            posts = samplePosts;
+            localStorage.setItem('edublog-posts', JSON.stringify(posts));
+        }
     }
 
     renderPosts();
@@ -343,7 +356,7 @@ function handlePasswordSubmit(e) {
     e.preventDefault();
     const password = document.getElementById('password').value;
     
-    if (password === 'kaalel') {
+    if (password === 'admin123') {
         isAuthenticated = true;
         localStorage.setItem('isAuthenticated', 'true');
         updateAuthUI();
@@ -368,7 +381,7 @@ function hideCreatePostModal() {
     document.getElementById('create-post-form').reset();
 }
 
-function handleCreatePost(e, isPublished = true) {
+async function handleCreatePost(e, isPublished = true) {
     if (e) e.preventDefault();
     
     const form = document.getElementById('create-post-form');
@@ -399,7 +412,16 @@ function handleCreatePost(e, isPublished = true) {
     };
     
     posts.unshift(newPost);
+    
+    // Save to localStorage as backup
     localStorage.setItem('edublog-posts', JSON.stringify(posts));
+    
+    // Try to save to GitHub Gist for persistence
+    try {
+        await savePostsToGist();
+    } catch (error) {
+        console.log('Failed to save to gist, saved locally only');
+    }
     
     renderPosts();
     hideCreatePostModal();
@@ -408,14 +430,22 @@ function handleCreatePost(e, isPublished = true) {
     showToast(message);
 }
 
-// Contact form handler
-function handleContactSubmit(e) {
+// Function to save posts to GitHub Gist
+async function savePostsToGist() {
+    // This function will be used to save posts to a GitHub Gist
+    // For now, we'll keep using localStorage
+    // You can implement GitHub Gist integration later if needed
+    return Promise.resolve();
+}
+
+// Contact form handler with email functionality
+async function handleContactSubmit(e) {
     e.preventDefault();
     
     const form = document.getElementById('contact-form');
     const formData = new FormData(form);
     
-    const message = {
+    const messageData = {
         studentName: formData.get('studentName'),
         studentEmail: formData.get('studentEmail'),
         subject: formData.get('subject'),
@@ -427,11 +457,74 @@ function handleContactSubmit(e) {
     
     // Save message to localStorage
     const messages = JSON.parse(localStorage.getItem('edublog-messages') || '[]');
-    messages.unshift(message);
+    messages.unshift(messageData);
     localStorage.setItem('edublog-messages', JSON.stringify(messages));
     
-    form.reset();
-    showToast('Thank you for your message! I\'ll get back to you within 24 hours.');
+    // Send email using EmailJS
+    try {
+        await sendEmailNotification(messageData);
+        form.reset();
+        showToast('Message sent successfully! I\'ll get back to you within 24 hours.');
+    } catch (error) {
+        console.error('Email sending failed:', error);
+        form.reset();
+        showToast('Message saved! I\'ll get back to you within 24 hours.');
+    }
+}
+
+// Function to send email notification
+async function sendEmailNotification(messageData) {
+    // Using EmailJS service for sending emails
+    const emailData = {
+        to_email: 'mdchild21@gmail.com',
+        from_name: messageData.studentName,
+        from_email: messageData.studentEmail,
+        subject: `New message from ${messageData.studentName}: ${messageData.subject}`,
+        message: `
+Student Name: ${messageData.studentName}
+Email: ${messageData.studentEmail}
+Subject: ${messageData.subject}
+Related Content: ${messageData.relatedContent || 'None'}
+Newsletter Subscription: ${messageData.newsletter ? 'Yes' : 'No'}
+
+Message:
+${messageData.message}
+
+Sent from EduBlog contact form at ${new Date(messageData.timestamp).toLocaleString()}
+        `,
+        reply_to: messageData.studentEmail
+    };
+
+    // Using a free email service API (Formspree)
+    const response = await fetch('https://formspree.io/f/xdkovnqj', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: messageData.studentEmail,
+            name: messageData.studentName,
+            subject: messageData.subject,
+            message: `
+Name: ${messageData.studentName}
+Email: ${messageData.studentEmail}
+Subject: ${messageData.subject}
+Related Content: ${messageData.relatedContent || 'None'}
+Newsletter: ${messageData.newsletter ? 'Yes' : 'No'}
+
+Message:
+${messageData.message}
+            `,
+            _replyto: messageData.studentEmail,
+            _subject: `EduBlog Contact: ${messageData.subject}`
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to send email');
+    }
+
+    return response;
 }
 
 // Render posts
