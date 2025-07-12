@@ -181,13 +181,14 @@ p {
 }
 
 .hero-subtitle {
-    color : black ;
+    color : #A9A9A9 ;
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
     opacity: 0.9;
 }
 
 .hero-description {
+    color : #A9A9A9 ;
     font-size: 1.125rem;
     margin-bottom: 2.5rem;
     opacity: 0.8;
