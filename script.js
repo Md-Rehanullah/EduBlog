@@ -74,22 +74,20 @@ function updateAuthUI() {
 }
 
 // Function to save posts to GitHub Gist
-async function savePostsToGist() {
+// Function to save posts to both localStorage and GitHub Gist
+async function savePosts() {
+    // Save to localStorage as backup
+    localStorage.setItem('edublog-posts', JSON.stringify(posts));
+    
+    // Try to save to GitHub Gist for persistence
     try {
-        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `token ${GIST_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                files: {
-                    [GIST_FILENAME]: {
-                        content: JSON.stringify(posts)
-                    }
-                }
-            })
-        });
+        await savePostsToGist();
+        return true;
+    } catch (error) {
+        console.log('Failed to save to gist, saved locally only');
+        return false;
+    }
+}
         
         if (!response.ok) {
             throw new Error('Failed to save to Gist');
