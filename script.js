@@ -1,9 +1,9 @@
 // Global state
 let posts = [];
 let isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-const GIST_ID = 'YOUR_GIST_ID'; // Replace with your actual Gist ID
+const GIST_ID = '6e5ce45bf729f33d108030b9e1fb6c74'; // Replace with your actual Gist ID
 const GIST_FILENAME = 'edublog-posts.json';
-const GIST_TOKEN = 'YOUR_GITHUB_TOKEN'; // Create a personal access token with gist scope
+const GIST_TOKEN = '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'; // Create a personal access token with gist scope
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
