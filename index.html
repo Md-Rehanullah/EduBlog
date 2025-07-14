@@ -308,5 +308,39 @@
 
 
     <script src="script.js"></script>
+    
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the create post modal
+        const createPostModal = document.getElementById('create-post-modal');
+        const closeCreateModal = document.getElementById('close-create-modal');
+        
+        if (closeCreateModal) {
+            closeCreateModal.addEventListener('click', function() {
+                createPostModal.classList.remove('active');
+                document.getElementById('create-post-form').reset();
+            });
+        }
+        
+        // Handle create post form submission
+        const createPostForm = document.getElementById('create-post-form');
+        if (createPostForm) {
+            createPostForm.addEventListener('submit', function(e) {
+                handleCreatePost(e, true);
+            });
+        }
+        
+        // Handle save draft button
+        const saveDraftBtn = document.getElementById('save-draft-btn');
+        if (saveDraftBtn) {
+            saveDraftBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleCreatePost(e, false);
+            });
+        }
+    });
+</script>
+    
 </body>
 </html>
