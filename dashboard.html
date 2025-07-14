@@ -108,6 +108,175 @@
 
     <script src="script.js"></script>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if already authenticated
+        if (localStorage.getItem('dashboardAuthenticated')) {
+            showDashboard();
+            loadPosts();
+        }
 
-</body>
+        // Password form
+        const passwordForm = document.getElementById('dashboard-password-form');
+        if (passwordForm) {
+            passwordForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const password = document.getElementById('dashboard-password').value;
+                if (password === 'admin123') {
+                    localStorage.setItem('dashboardAuthenticated', 'true');
+                    showDashboard();
+                    loadPosts();
+                } else {
+                    alert('Incorrect password. Please try again.');
+                }
+            });
+        }
+
+        // Create new post button
+        const createPostBtn = document.getElementById('create-new-post');
+        if (createPostBtn) {
+            createPostBtn.addEventListener('click', function() {
+                window.location.href = 'index.html#create-post-modal';
+            });
+        }
+
+        // Refresh posts button
+        const refreshBtn = document.getElementById('refresh-posts');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                loadPosts();
+            });
+        }
+
+        // Filter posts
+        const filterSelect = document.getElementById('posts-filter');
+        if (filterSelect) {
+            filterSelect.addEventListener('change', function() {
+                loadPosts(this.value);
+            });
+        }
+    });
+
+    function showDashboard() {
+        document.getElementById('dashboard-auth').style.display = 'none';
+        document.getElementById('dashboard-main').style.display = 'block';
+    }
+
+    function loadPosts(filter = 'all') {
+        const postsContainer = document.getElementById('posts-container');
+        postsContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Loading posts...</div>';
+
+        // Get posts from the global posts array
+        let filteredPosts = [...window.EduBlog.posts];
+        
+        // Apply filters
+        if (filter === 'blog') {
+            filteredPosts = filteredPosts.filter(post => post.contentType === 'blog');
+        } else if (filter === 'story') {
+            filteredPosts = filteredPosts.filter(post => post.contentType === 'story');
+        } else if (filter === 'news') {
+            filteredPosts = filteredPosts.filter(post => post.contentType === 'news');
+        } else if (filter === 'published') {
+            filteredPosts = filteredPosts.filter(post => post.isPublished);
+        } else if (filter === 'drafts') {
+            filteredPosts = filteredPosts.filter(post => !post.isPublished);
+        }
+
+        // Render posts
+        setTimeout(() => {
+            postsContainer.innerHTML = '';
+            if (filteredPosts.length === 0) {
+                postsContainer.innerHTML = '<p>No posts found matching your criteria.</p>';
+                return;
+            }
+
+            filteredPosts.forEach(post => {
+                postsContainer.appendChild(createPostElement(post));
+            });
+        }, 500);
+    }
+
+    function createPostElement(post) {
+        const postElement = document.createElement('div');
+        postElement.className = 'post-item';
+        
+        const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        const statusClass = post.isPublished ? 'published' : 'draft';
+        const statusText = post.isPublished ? 'Published' : 'Draft';
+        
+        postElement.innerHTML = `
+            <div class="post-header">
+                <h3>${post.title}</h3>
+                <div class="post-meta">
+                    <span class="status ${statusClass}">${statusText}</span>
+                    <span>${publishedDate}</span>
+                    <span>${post.contentType}</span>
+                </div>
+            </div>
+            <div class="post-excerpt">${post.excerpt}</div>
+            <div class="post-actions">
+                <button class="btn btn-primary" onclick="editPost(${post.id})">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-danger" onclick="deletePost(${post.id})">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+                ${!post.isPublished ? `
+                <button class="btn btn-success" onclick="publishPost(${post.id})">
+                    <i class="fas fa-check"></i> Publish
+                </button>
+                ` : ''}
+            </div>
+        `;
+        
+        return postElement;
+    }
+
+    function editPost(postId) {
+        const post = window.EduBlog.posts.find(p => p.id === postId);
+        if (!post) return;
+        
+        // Fill the create post form with existing data
+        document.getElementById('post-title').value = post.title;
+        document.getElementById('post-type').value = post.contentType;
+        document.getElementById('post-excerpt').value = post.excerpt;
+        document.getElementById('post-content').value = post.content;
+        document.getElementById('post-tags').value = post.tags ? post.tags.join(', ') : '';
+        
+        // Show the modal
+        document.getElementById('create-post-modal').classList.add('active');
+        
+        // Update the form to handle updates instead of creates
+        const form = document.getElementById('create-post-form');
+        form.dataset.editingPostId = postId;
+        form.querySelector('button[type="submit"]').textContent = 'Update Post';
+    }
+
+    function deletePost(postId) {
+        if (confirm('Are you sure you want to delete this post? This cannot be undone.')) {
+            window.EduBlog.posts = window.EduBlog.posts.filter(p => p.id !== postId);
+            window.EduBlog.savePostsToGist().then(() => {
+                loadPosts(document.getElementById('posts-filter').value);
+                window.EduBlog.showToast('Post deleted successfully.');
+            });
+        }
+    }
+
+    function publishPost(postId) {
+        const post = window.EduBlog.posts.find(p => p.id === postId);
+        if (post) {
+            post.isPublished = true;
+            post.publishedAt = new Date().toISOString().split('T')[0];
+            window.EduBlog.savePostsToGist().then(() => {
+                loadPosts(document.getElementById('posts-filter').value);
+                window.EduBlog.showToast('Post published successfully!');
+            });
+        }
+    }
+</script></body>
 </html>
