@@ -1,11 +1,9 @@
-const GIST_ID = 'YOUR_GIST_ID'; // Replace with your actual Gist ID
-const GIST_FILENAME = 'edublog-posts.json';
-const GIST_TOKEN = 'YOUR_GITHUB_TOKEN'; // Create a personal access token with gist scope
-
-
 // Global state
 let posts = [];
 let isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+const GIST_ID = 'YOUR_GIST_ID'; // Replace with your actual Gist ID
+const GIST_FILENAME = 'edublog-posts.json';
+const GIST_TOKEN = 'YOUR_GITHUB_TOKEN'; // Create a personal access token with gist scope
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -22,6 +20,11 @@ function initializeApp() {
 
 // Load sample data and posts from GitHub Gist
 async function loadSampleData() {
+    // Sample posts data (fallback)
+    const samplePosts = [
+        // Your existing sample posts array
+    ];
+
     try {
         // Try to load posts from GitHub Gist
         const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
@@ -38,19 +41,40 @@ async function loadSampleData() {
         if (savedPosts) {
             posts = JSON.parse(savedPosts);
         } else {
-            // Use sample data if nothing is available
-            posts = [
-                // Your existing sample posts here
-            ];
+            posts = samplePosts;
             localStorage.setItem('edublog-posts', JSON.stringify(posts));
         }
     }
     renderPosts();
 }
 
-try {
-        // Try to load posts from GitHub Gist
-        async function savePostsToGist() {
+// Setup event listeners
+function setupEventListeners() {
+    // Existing event listeners...
+    
+    // Add dashboard link visibility based on authentication
+    updateAuthUI();
+}
+
+// Authentication functions
+function updateAuthUI() {
+    const adminAccessBtn = document.getElementById('admin-access-btn');
+    const createPostBtn = document.getElementById('create-post-btn');
+    const dashboardLink = document.getElementById('dashboard-link');
+    
+    if (isAuthenticated) {
+        adminAccessBtn.style.display = 'none';
+        createPostBtn.style.display = 'inline-flex';
+        if (dashboardLink) dashboardLink.style.display = 'block';
+    } else {
+        adminAccessBtn.style.display = 'inline-flex';
+        createPostBtn.style.display = 'none';
+        if (dashboardLink) dashboardLink.style.display = 'none';
+    }
+}
+
+// Function to save posts to GitHub Gist
+async function savePostsToGist() {
     try {
         const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
             method: 'PATCH',
@@ -79,6 +103,7 @@ try {
     }
 }
 
+
 // Setup event listeners
 function setupEventListeners() {
     // Navigation toggle
@@ -91,66 +116,7 @@ function setupEventListeners() {
         });
     }
 
-    // Admin access button
-    const adminAccessBtn = document.getElementById('admin-access-btn');
-    if (adminAccessBtn) {
-        adminAccessBtn.addEventListener('click', showPasswordModal);
-    }
-
-    // Create post button
-    const createPostBtn = document.getElementById('create-post-btn');
-    if (createPostBtn) {
-        createPostBtn.addEventListener('click', showCreatePostModal);
-    }
-
-    // Password form
-    const passwordForm = document.getElementById('password-form');
-    if (passwordForm) {
-        passwordForm.addEventListener('submit', handlePasswordSubmit);
-    }
-
-    // Cancel password modal
-    const cancelBtn = document.getElementById('cancel-btn');
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', hidePasswordModal);
-    }
-
-    // Create post form
-    const createPostForm = document.getElementById('create-post-form');
-    if (createPostForm) {
-        createPostForm.addEventListener('submit', handleCreatePost);
-    }
-
-    // Save draft button
-    const saveDraftBtn = document.getElementById('save-draft-btn');
-    if (saveDraftBtn) {
-        saveDraftBtn.addEventListener('click', () => handleCreatePost(null, false));
-    }
-
-    // Close create post modal
-    const closeCreateModal = document.getElementById('close-create-modal');
-    if (closeCreateModal) {
-        closeCreateModal.addEventListener('click', hideCreatePostModal);
-    }
-
-    // Contact form
-    const contactForm = document.getElementById('contact-form');
-    if (contactForm) {
-        contactForm.addEventListener('submit', handleContactSubmit);
-    }
-
-    // Close modals when clicking outside
-    window.addEventListener('click', (e) => {
-        const passwordModal = document.getElementById('password-modal');
-        const createPostModal = document.getElementById('create-post-modal');
-        
-        if (e.target === passwordModal) {
-            hidePasswordModal();
-        }
-        if (e.target === createPostModal) {
-            hideCreatePostModal();
-        }
-    });
+    
 
     // Smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -576,5 +542,13 @@ scrollToTopButton.addEventListener('click', () => {
 
 
 
-
+// Export for potential use in other files
+window.EduBlog = {
+    posts,
+    isAuthenticated,
+    logout,
+    showToast,
+    openPostModal,
+    savePostsToGist
+};
 
