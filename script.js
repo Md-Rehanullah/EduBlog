@@ -552,3 +552,126 @@ window.EduBlog = {
     savePostsToGist
 };
 
+
+
+
+
+
+
+
+
+// Dashboard functions
+function initializeDashboard() {
+    if (!window.EduBlog.isAuthenticated) return;
+    
+    const passwordForm = document.getElementById('dashboard-password-form');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('dashboard-password').value;
+            if (password === 'admin123') {
+                window.EduBlog.isAuthenticated = true;
+                localStorage.setItem('isAuthenticated', 'true');
+                showDashboard();
+                showToast('Authentication successful!');
+            } else {
+                showToast('Incorrect password. Please try again.', 'error');
+            }
+        });
+    }
+
+    // Check if already authenticated
+    if (window.EduBlog.isAuthenticated) {
+        showDashboard();
+    }
+
+    // Set up dashboard event listeners
+    document.getElementById('create-new-post')?.addEventListener('click', showCreatePostModal);
+    document.getElementById('refresh-posts')?.addEventListener('click', () => loadDashboardPosts());
+    document.getElementById('posts-filter')?.addEventListener('change', function() {
+        loadDashboardPosts(this.value);
+    });
+}
+
+function showDashboard() {
+    const authSection = document.getElementById('dashboard-auth');
+    const mainSection = document.getElementById('dashboard-main');
+    
+    if (authSection) authSection.style.display = 'none';
+    if (mainSection) mainSection.style.display = 'block';
+    
+    loadDashboardPosts();
+}
+
+function loadDashboardPosts(filter = 'all') {
+    const postsContainer = document.getElementById('posts-container');
+    if (!postsContainer) return;
+    
+    postsContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Loading posts...</div>';
+
+    let filteredPosts = [...window.EduBlog.posts];
+    
+    // Apply filters
+    if (filter !== 'all') {
+        if (filter === 'published') {
+            filteredPosts = filteredPosts.filter(post => post.isPublished);
+        } else if (filter === 'drafts') {
+            filteredPosts = filteredPosts.filter(post => !post.isPublished);
+        } else {
+            filteredPosts = filteredPosts.filter(post => post.contentType === filter);
+        }
+    }
+
+    // Render posts
+    postsContainer.innerHTML = '';
+    if (filteredPosts.length === 0) {
+        postsContainer.innerHTML = '<p class="loading">No posts found.</p>';
+    } else {
+        filteredPosts.forEach(post => {
+            postsContainer.appendChild(createDashboardPostElement(post));
+        });
+    }
+}
+
+function createDashboardPostElement(post) {
+    const element = document.createElement('div');
+    element.className = 'post-item';
+    
+    const statusClass = post.isPublished ? 'published' : 'draft';
+    const statusText = post.isPublished ? 'Published' : 'Draft';
+    
+    element.innerHTML = `
+        <div class="post-header">
+            <h3>${post.title}</h3>
+            <div class="post-meta">
+                <span class="status ${statusClass}">${statusText}</span>
+                <span>${post.contentType}</span>
+                <span>${new Date(post.publishedAt).toLocaleDateString()}</span>
+            </div>
+        </div>
+        <div class="post-excerpt">${post.excerpt}</div>
+        <div class="post-actions">
+            <button class="btn btn-primary" onclick="window.EduBlog.openPostModal(${post.id})">
+                <i class="fas fa-eye"></i> View
+            </button>
+            <button class="btn btn-outline" onclick="editPost(${post.id})">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-danger" onclick="deletePost(${post.id})">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+    `;
+    
+    return element;
+}
+
+// Add to initialization
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+    loadSampleData();
+    setupEventListeners();
+    updateAuthUI();
+    initializeDashboard(); // Add this line
+});
+
