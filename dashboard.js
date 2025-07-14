@@ -70,7 +70,7 @@ function setupEventListeners() {
 function loadPosts() {
     try {
         // Try to load from GitHub Gist
-        fetch('https://api.github.com/gists/f337ff0594fcb491caeb05a1a05e516a')
+        fetch('https://api.github.com/gists/6e5ce45bf729f33d108030b9e1fb6c74.js')
             .then(response => response.ok ? response.json() : Promise.reject('Failed to load from Gist'))
             .then(gistData => {
                 const postsContent = gistData.files['edublog-posts.json'].content;
@@ -366,10 +366,10 @@ async function saveToGist() {
     };
     
     try {
-        const response = await fetch('https://api.github.com/gists/f337ff0594fcb491caeb05a1a05e516a', {
+        const response = await fetch('https://api.github.com/gists/6e5ce45bf729f33d108030b9e1fb6c74.js', {
             method: 'PATCH',
             headers: {
-                'Authorization': `token YOUR_GITHUB_TOKEN`,
+                'Authorization': `token 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',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(gistData)
