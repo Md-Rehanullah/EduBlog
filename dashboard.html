@@ -37,97 +37,152 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <section class="page-header">
+        <section class="dashboard-section">
             <div class="container">
-                <h1>Dashboard</h1>
-                <p>Manage your EduBlog content</p>
-            </div>
-        </section>
-
-        <section class="dashboard-content">
-            <div class="container">
-                <div id="dashboard-auth" class="dashboard-auth">
-                    <div class="auth-form">
-                        <h2>Admin Authentication</h2>
-                        <p>Please enter your password to access the dashboard</p>
-                        <form id="dashboard-password-form">
+                <!-- Password Section -->
+                <div id="password-section" class="password-container">
+                    <div class="password-form-container">
+                        <div class="password-header">
+                            <i class="fas fa-shield-alt"></i>
+                            <h2>Protected Dashboard</h2>
+                            <p>Please authenticate to access the content management system</p>
+                        </div>
+                        <form id="dashboard-password-form" class="password-form">
                             <div class="form-group">
-                                <label for="dashboard-password">Password</label>
-                                <input type="password" id="dashboard-password" required>
+                                <label for="dashboard-password">Enter Password:</label>
+                                <input type="password" id="dashboard-password" name="password" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Authenticate</button>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Authenticate</button>
+                            </div>
                         </form>
                     </div>
                 </div>
-
-                <div id="dashboard-main" class="dashboard-main" style="display: none;">
-                    <div class="dashboard-actions">
-                        <button id="create-new-post" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Create New Post
-                        </button>
-                        <button id="refresh-posts" class="btn btn-outline">
-                            <i class="fas fa-sync-alt"></i> Refresh Posts
-                        </button>
+                
+                <!-- Dashboard Content (Hidden until authenticated) -->
+                <div id="dashboard-content" style="display: none;">
+                    <div class="dashboard-header">
+                        <h1><i class="fas fa-tachometer-alt"></i> Content Dashboard</h1>
+                        <p>Manage all blog content, stories, and news articles</p>
                     </div>
-
-                    <div class="posts-list">
-                        <h2>Your Posts</h2>
-                        <div class="posts-filter">
-                            <select id="posts-filter">
-                                <option value="all">All Posts</option>
-                                <option value="blog">Blogs</option>
-                                <option value="story">Stories</option>
-                                <option value="news">News</option>
-                                <option value="published">Published</option>
-                                <option value="drafts">Drafts</option>
-                            </select>
+                    
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number" id="total-posts">0</div>
+                                <div class="stat-label">Total Posts</div>
+                            </div>
                         </div>
-                        <!-- Create Post Modal for Dashboard -->
-<div id="dashboard-create-post-modal" class="modal">
-    <div class="modal-content large">
-        <div class="modal-header">
-            <h2>Create New Post</h2>
-            <button type="button" class="close-btn" onclick="hideDashboardCreateModal()">&times;</button>
-        </div>
-        <form id="dashboard-create-post-form" class="create-post-form">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="dashboard-post-title">Title *</label>
-                    <input type="text" id="dashboard-post-title" name="title" required>
-                </div>
-                <div class="form-group">
-                    <label for="dashboard-post-type">Content Type *</label>
-                    <select id="dashboard-post-type" name="contentType" required>
-                        <option value="">Select type...</option>
-                        <option value="blog">Blog</option>
-                        <option value="story">Story</option>
-                        <option value="news">News</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="dashboard-post-excerpt">Excerpt *</label>
-                <textarea id="dashboard-post-excerpt" name="excerpt" rows="3" required placeholder="Brief description of your content..."></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="dashboard-post-content">Content *</label>
-                <textarea id="dashboard-post-content" name="content" rows="15" required placeholder="Write your content here... You can use markdown formatting."></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="dashboard-post-tags">Tags (comma-separated)</label>
-                <input type="text" id="dashboard-post-tags" name="tags" placeholder="e.g., education, study tips, motivation">
-            </div>
-            
-            <div class="form-actions">
-                <button type="button" id="dashboard-save-draft-btn" class="btn btn-outline">Save as Draft</button>
-                <button type="submit" class="btn btn-primary">Publish Post</button>
-            </div>
-        </form>
-    </div>
-</div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number" id="published-posts">0</div>
+                                <div class="stat-label">Published</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number" id="draft-posts">0</div>
+                                <div class="stat-label">Drafts</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Create/Edit Post Form -->
+                    <div class="dashboard-form-section">
+                        <h2><i class="fas fa-plus-circle"></i> Create New Post</h2>
+                        <form id="create-post-form" class="create-post-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="post-title">Title *</label>
+                                    <input type="text" id="post-title" name="title" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="post-type">Content Type *</label>
+                                    <select id="post-type" name="contentType" required>
+                                        <option value="">Select type...</option>
+                                        <option value="blog">Blog</option>
+                                        <option value="story">Story</option>
+                                        <option value="news">News</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="post-excerpt">Excerpt *</label>
+                                <textarea id="post-excerpt" name="excerpt" rows="3" required placeholder="Brief description of your content..."></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="post-content">Content *</label>
+                                <textarea id="post-content" name="content" rows="15" required placeholder="Write your content here... You can use markdown formatting."></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="post-tags">Tags (comma-separated)</label>
+                                    <input type="text" id="post-tags" name="tags" placeholder="e.g., education, study tips, motivation">
+                                </div>
+                                <div class="form-group">
+                                    <label for="post-image">Image URL (optional)</label>
+                                    <input type="text" id="post-image" name="image" placeholder="https://example.com/image.jpg">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="post-published" name="published" checked>
+                                    <span class="checkmark"></span>
+                                    Publish immediately
+                                </label>
+                            </div>
+                            
+                            <input type="hidden" id="post-id" name="id" value="">
+                            
+                            <div class="form-actions">
+                                <button type="button" id="reset-form-btn" class="btn btn-outline">Reset</button>
+                                <button type="submit" class="btn btn-primary">Save Post</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Posts Management -->
+                    <div class="dashboard-posts-section">
+                        <h2><i class="fas fa-list"></i> Manage Posts</h2>
+                        <div class="posts-filter">
+                            <div class="filter-group">
+                                <label for="filter-type">Filter by type:</label>
+                                <select id="filter-type">
+                                    <option value="all">All Types</option>
+                                    <option value="blog">Blogs</option>
+                                    <option value="story">Stories</option>
+                                    <option value="news">News</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="filter-status">Filter by status:</label>
+                                <select id="filter-status">
+                                    <option value="all">All Statuses</option>
+                                    <option value="published">Published</option>
+                                    <option value="draft">Drafts</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="posts-list" id="posts-list">
+                            <!-- Posts will be loaded here -->
+                            <div class="loading">
+                                <i class="fas fa-spinner fa-spin"></i> Loading posts...
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -136,186 +191,118 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <!-- Your existing footer content -->
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>EduBlog</h3>
+                    <p>Empowering students through educational content, inspiring stories, and academic guidance.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="index.html#content">Content</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="terms-conditions.html">Terms & Conditions</a></li>
+                        <li><a href="sitemap.html">Sitemap</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 EduBlog. All rights reserved. Built with passion for education.</p>
+            </div>
+        </div>
     </footer>
 
-    <!-- Post Editor Modal -->
-    <div id="post-editor-modal" class="modal">
-        <!-- Modal content for post editing -->
-    </div>
-
     <!-- Confirmation Modal -->
-    <div id="confirm-modal" class="modal">
-        <!-- Modal content for confirmations -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Action</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirmation-message">Are you sure you want to delete this post?</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="cancel-action" class="btn btn-outline">Cancel</button>
+                <button type="button" id="confirm-action" class="btn btn-danger">Confirm</button>
+            </div>
+        </div>
     </div>
 
-    <script src="script.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Check if already authenticated
-        if (localStorage.getItem('dashboardAuthenticated')) {
-            showDashboard();
-            loadPosts();
-        }
-
-        // Password form
-        const passwordForm = document.getElementById('dashboard-password-form');
-        if (passwordForm) {
-            passwordForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const password = document.getElementById('dashboard-password').value;
-                if (password === 'admin123') {
-                    localStorage.setItem('dashboardAuthenticated', 'true');
-                    showDashboard();
-                    loadPosts();
-                } else {
-                    alert('Incorrect password. Please try again.');
-                }
-            });
-        }
-
-        // Create new post button - now shows modal instead of redirecting
-        const createPostBtn = document.getElementById('create-new-post');
-        if (createPostBtn) {
-            createPostBtn.addEventListener('click', function() {
-                showDashboardCreateModal();
-            });
-        }
-
-        // Refresh posts button
-        const refreshBtn = document.getElementById('refresh-posts');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', function() {
-                loadPosts();
-            });
-        }
-
-        // Filter posts
-        const filterSelect = document.getElementById('posts-filter');
-        if (filterSelect) {
-            filterSelect.addEventListener('change', function() {
-                loadPosts(this.value);
-            });
-        }
-
-        // Dashboard create post form
-        const dashboardCreateForm = document.getElementById('dashboard-create-post-form');
-        if (dashboardCreateForm) {
-            dashboardCreateForm.addEventListener('submit', function(e) {
-                handleDashboardCreatePost(e, true);
-            });
-        }
-
-        // Dashboard save draft button
-        const dashboardSaveDraftBtn = document.getElementById('dashboard-save-draft-btn');
-        if (dashboardSaveDraftBtn) {
-            dashboardSaveDraftBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                handleDashboardCreatePost(e, false);
-            });
-        }
-    });
-
-    function showDashboard() {
-        document.getElementById('dashboard-auth').style.display = 'none';
-        document.getElementById('dashboard-main').style.display = 'block';
-    }
-
-    function showDashboardCreateModal() {
-        document.getElementById('dashboard-create-post-modal').classList.add('active');
-    }
-
-    function hideDashboardCreateModal() {
-        document.getElementById('dashboard-create-post-modal').classList.remove('active');
-        document.getElementById('dashboard-create-post-form').reset();
-        // Clear any editing state
-        const form = document.getElementById('dashboard-create-post-form');
-        delete form.dataset.editingPostId;
-        if (form.querySelector('button[type="submit"]')) {
-            form.querySelector('button[type="submit"]').textContent = 'Publish Post';
-        }
-    }
-
-    async function handleDashboardCreatePost(e, isPublished) {
-        if (e) e.preventDefault();
-        
-        const form = document.getElementById('dashboard-create-post-form');
-        const formData = new FormData(form);
-        
-        const title = formData.get('title');
-        const contentType = formData.get('contentType');
-        const excerpt = formData.get('excerpt');
-        const content = formData.get('content');
-        const tagsString = formData.get('tags');
-        
-        if (!title || !contentType || !excerpt || !content) {
-            window.EduBlog.showToast('Please fill in all required fields.', 'error');
-            return;
-        }
-        
-        const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()) : [];
-        
-        // Check if we're editing an existing post
-        const isEditing = form.dataset.editingPostId;
-        
-        let newPost;
-        if (isEditing) {
-            // Update existing post
-            const postId = parseInt(form.dataset.editingPostId);
-            const postIndex = window.EduBlog.posts.findIndex(p => p.id === postId);
-            
-            if (postIndex !== -1) {
-                window.EduBlog.posts[postIndex] = {
-                    ...window.EduBlog.posts[postIndex],
-                    title,
-                    excerpt,
-                    content,
-                    contentType,
-                    tags,
-                    isPublished,
-                    updatedAt: new Date().toISOString()
-                };
-                newPost = window.EduBlog.posts[postIndex];
-            }
-        } else {
-            // Create new post
-            newPost = {
-                id: Date.now(),
-                title,
-                excerpt,
-                content,
-                contentType,
-                tags,
-                publishedAt: new Date().toISOString().split('T')[0],
-                isPublished,
-                createdAt: new Date().toISOString()
-            };
-            
-            window.EduBlog.posts.unshift(newPost);
-        }
-        
-        // Save posts
-        const saved = await window.EduBlog.savePostsToGist();
-        
-        // Update UI
-        window.EduBlog.renderPosts();
-        hideDashboardCreateModal();
-        loadPosts(document.getElementById('posts-filter').value);
-        
-        const message = isEditing ? 
-            (isPublished ? 'Post updated successfully!' : 'Changes saved as draft!') :
-            (isPublished ? 'Post published successfully!' : 'Post saved as draft!');
-        
-        window.EduBlog.showToast(message);
-        
-        // Reset form
-        form.reset();
-        delete form.dataset.editingPostId;
-        if (form.querySelector('button[type="submit"]')) {
-            form.querySelector('button[type="submit"]').textContent = 'Publish Post';
-        }
-    }
-
-    // ... rest of your existing dashboard functions (loadPosts, createPostElement, editPost, deletePost, publishPost) ...
-</script></body>
+    <script src="dashboard.js"></script>
+</body>
 </html>
+
+
+
+
+[file name]: script.js
+[file content begin]
+// Remove all admin functionality from script.js
+// Keep only the post loading and rendering functionality
+
+// Global state
+let posts = [];
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', function() {
+    initializeApp();
+    loadSampleData();
+    setupEventListeners();
+});
+
+// Initialize application
+function initializeApp() {
+    console.log('EduBlog application initialized');
+}
+
+// Load sample data and posts from GitHub Gist
+async function loadSampleData() {
+    // ... existing loadSampleData code ...
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // ... existing setupEventListeners code without admin functionality ...
+}
+
+// Render posts
+function renderPosts() {
+    // ... existing renderPosts code ...
+}
+
+// Create post card element
+function createPostCard(post) {
+    // ... existing createPostCard code ...
+}
+
+// Open post in modal (for full content reading)
+function openPostModal(postId) {
+    // ... existing openPostModal code ...
+}
+
+// Simple markdown to HTML converter
+function markdownToHtml(markdown) {
+    // ... existing markdownToHtml code ...
+}
+[file content end]
