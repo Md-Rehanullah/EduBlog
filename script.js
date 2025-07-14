@@ -1,3 +1,8 @@
+const GIST_ID = 'YOUR_GIST_ID'; // Replace with your actual Gist ID
+const GIST_FILENAME = 'edublog-posts.json';
+const GIST_TOKEN = 'YOUR_GITHUB_TOKEN'; // Create a personal access token with gist scope
+
+
 // Global state
 let posts = [];
 let isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -17,225 +22,61 @@ function initializeApp() {
 
 // Load sample data and posts from GitHub Gist
 async function loadSampleData() {
-    // Sample posts data (fallback)
-    const samplePosts = [
-        {
-            id: 1,
-            title: "Effective Study Techniques for Modern Students",
-            excerpt: "Discover proven methods to enhance your learning and retention rates with these scientifically-backed study strategies.",
-            content: `# Effective Study Techniques for Modern Students
-
-In today's fast-paced educational environment, students need more than just dedication to succeed. They need proven strategies that maximize learning efficiency and retention.
-
-## Active Learning Strategies
-
-### 1. The Pomodoro Technique
-Break your study sessions into 25-minute focused intervals followed by 5-minute breaks. This method helps maintain concentration and prevents mental fatigue.
-
-### 2. Spaced Repetition
-Review material at increasing intervals to strengthen long-term memory. Start with daily reviews, then move to weekly, and finally monthly reviews.
-
-### 3. Active Recall
-Instead of simply re-reading notes, actively test yourself on the material. Use flashcards, practice problems, or explain concepts out loud.
-
-## Creating an Optimal Study Environment
-
-- Find a quiet, dedicated space for studying
-- Eliminate distractions (phones, social media)
-- Ensure proper lighting and comfortable seating
-- Keep all necessary materials within reach
-
-## The Science Behind Effective Learning
-
-Research shows that students who use active learning techniques perform 6% better on exams compared to those who rely on passive methods like highlighting and re-reading.
-
-## Conclusion
-
-Implementing these evidence-based study techniques can significantly improve your academic performance. Remember, consistency is key – start small and gradually build these habits into your daily routine.`,
-            contentType: "blog",
-            tags: ["study tips", "education", "productivity", "learning"],
-            publishedAt: "2024-12-15",
-            isPublished: true
-        },
-        {
-            id: 2,
-            title: "From Doubt to Discovery: A Student's Journey",
-            excerpt: "An inspiring tale of overcoming academic challenges and finding purpose through perseverance and self-belief.",
-            content: `# From Doubt to Discovery: A Student's Journey
-
-*This is the story of Sarah, a first-year university student who transformed her academic struggles into triumph.*
-
-## The Beginning: Overwhelmed and Uncertain
-
-Sarah entered university with high hopes but quickly felt overwhelmed by the academic demands. Coming from a small town high school, she found herself struggling to keep up with the pace and complexity of university-level coursework.
-
-> "I remember sitting in my first chemistry lecture, feeling completely lost. Everyone around me seemed to understand concepts that felt like a foreign language to me." - Sarah
-
-## The Turning Point
-
-After failing her first midterm exam, Sarah considered dropping out. However, a chance encounter with a peer tutor changed everything. The tutor didn't just help with academics – they showed Sarah that struggling was normal and that success was still within reach.
-
-## Building New Habits
-
-Sarah began implementing structured study routines:
-
-1. **Morning Planning**: Each day started with a clear plan of what to accomplish
-2. **Study Groups**: Joining collaborative learning sessions with classmates
-3. **Office Hours**: Regular meetings with professors to clarify difficult concepts
-4. **Self-Care**: Maintaining physical and mental health through exercise and adequate sleep
-
-## The Transformation
-
-By the end of her first year, Sarah not only passed all her courses but earned a place on the Dean's List. More importantly, she discovered a passion for biochemistry that would guide her future career path.
-
-## Lessons Learned
-
-- **Struggle is temporary**: Academic difficulties don't define your potential
-- **Seek help early**: Don't wait until you're failing to ask for assistance
-- **Community matters**: Building relationships with peers and instructors is crucial
-- **Growth takes time**: Progress might be slow, but persistence pays off
-
-## Sarah Today
-
-Now in her final year, Sarah serves as a peer mentor, helping other students navigate their own academic challenges. She's also been accepted into a prestigious graduate program in biochemical research.
-
-*"Looking back, those early struggles were actually gifts. They taught me resilience, humility, and the importance of never giving up on myself."* - Sarah
-
-## Your Journey Awaits
-
-Every student's path is unique, but the principles remain the same: believe in yourself, seek support when needed, and remember that every expert was once a beginner.`,
-            contentType: "story",
-            tags: ["inspiration", "student life", "perseverance", "success"],
-            publishedAt: "2024-12-12",
-            isPublished: true
-        },
-        {
-            id: 3,
-            title: "New Scholarship Programs for 2025",
-            excerpt: "Exciting opportunities for students with comprehensive scholarship programs launching next year across multiple disciplines.",
-            content: `# New Scholarship Programs for 2025
-
-*Breaking News: Major educational institutions announce expanded scholarship opportunities*
-
-## Overview
-
-As we approach 2025, universities and educational foundations across the country are launching comprehensive scholarship programs aimed at making higher education more accessible to students from all backgrounds.
-
-## Major Announcements
-
-### National STEM Excellence Scholarships
-- **Value**: Up to $50,000 per year
-- **Eligibility**: High school seniors pursuing STEM fields
-- **Application Deadline**: March 15, 2025
-- **Coverage**: Tuition, books, and living expenses
-
-### First-Generation College Student Support
-- **Value**: $25,000 per year + mentorship program
-- **Target**: Students whose parents didn't attend college
-- **Additional Benefits**: Career counseling and internship placement
-
-### Community Service Leadership Awards
-- **Value**: $30,000 per year
-- **Requirements**: Demonstrated community involvement
-- **Renewable**: For up to 4 years with maintained GPA
-
-## Application Tips
-
-### Start Early
-Most scholarship applications require:
-- Academic transcripts
-- Letters of recommendation
-- Personal essays
-- Financial aid documentation
-
-### Strong Essays Matter
-Successful scholarship essays typically:
-- Tell a compelling personal story
-- Demonstrate alignment with scholarship values
-- Show clear academic and career goals
-- Highlight unique experiences or perspectives
-
-### Get Quality Recommendations
-Choose recommenders who:
-- Know you well professionally or academically
-- Can speak to specific achievements
-- Have time to write thoughtful letters
-
-## Regional Programs
-
-### West Coast Innovation Grants
-Focusing on technology and entrepreneurship education
-
-### Midwest Agricultural Leadership
-Supporting students in agricultural and environmental sciences
-
-### East Coast Arts and Humanities
-Promoting creative and cultural studies
-
-## Important Dates
-
-- **January 15, 2025**: Early application deadlines begin
-- **February 1, 2025**: FAFSA submission recommended
-- **March 15, 2025**: Most applications due
-- **April 30, 2025**: Award notifications sent
-- **May 15, 2025**: Acceptance deadline
-
-## Resources for Applicants
-
-1. **Scholarship Search Websites**
-   - College Board Scholarship Search
-   - FastWeb
-   - Scholarships.com
-
-2. **School Counseling Offices**
-   - Local scholarship opportunities
-   - Application review services
-   - Deadline tracking assistance
-
-3. **Community Organizations**
-   - Rotary Club scholarships
-   - Chamber of Commerce awards
-   - Religious organization funding
-
-## Looking Ahead
-
-These new programs represent a $2.8 billion investment in student success. With over 15,000 scholarships available, more students than ever will have access to quality higher education.
-
-## Take Action Now
-
-Don't wait – start researching and preparing your applications today. The competition will be significant, but the opportunities are unprecedented.
-
-For more information and direct links to applications, visit our scholarship resource center or contact your school's guidance counselor.`,
-            contentType: "news",
-            tags: ["scholarships", "financial aid", "higher education", "opportunities"],
-            publishedAt: "2024-12-10",
-            isPublished: true
-        }
-    ];
-
     try {
         // Try to load posts from GitHub Gist
-        const response = await fetch('https://api.github.com/gists/f337ff0594fcb491caeb05a1a05e516a');
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`);
         if (response.ok) {
             const gistData = await response.json();
-            const postsContent = gistData.files['edublog-posts.json'].content;
+            const postsContent = gistData.files[GIST_FILENAME].content;
             posts = JSON.parse(postsContent);
         } else {
             throw new Error('Gist not found');
         }
     } catch (error) {
-        console.log('Loading from gist failed, using sample data');
-        // Fallback: load from localStorage or use sample data
+        console.log('Loading from gist failed, using localStorage as fallback');
         const savedPosts = localStorage.getItem('edublog-posts');
         if (savedPosts) {
             posts = JSON.parse(savedPosts);
         } else {
-            posts = samplePosts;
+            // Use sample data if nothing is available
+            posts = [
+                // Your existing sample posts here
+            ];
             localStorage.setItem('edublog-posts', JSON.stringify(posts));
         }
     }
-
     renderPosts();
+}
+
+try {
+        // Try to load posts from GitHub Gist
+        async function savePostsToGist() {
+    try {
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${GIST_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                files: {
+                    [GIST_FILENAME]: {
+                        content: JSON.stringify(posts)
+                    }
+                }
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to save to Gist');
+        }
+        return true;
+    } catch (error) {
+        console.error('Error saving to Gist:', error);
+        // Fallback to localStorage
+        localStorage.setItem('edublog-posts', JSON.stringify(posts));
+        return false;
+    }
 }
 
 // Setup event listeners
