@@ -82,9 +82,52 @@
                                 <option value="drafts">Drafts</option>
                             </select>
                         </div>
-                        <div id="posts-container" class="posts-container">
-                            <!-- Posts will be loaded here -->
-                        </div>
+                        <!-- Create Post Modal for Dashboard -->
+<div id="dashboard-create-post-modal" class="modal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h2>Create New Post</h2>
+            <button type="button" class="close-btn" onclick="hideDashboardCreateModal()">&times;</button>
+        </div>
+        <form id="dashboard-create-post-form" class="create-post-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dashboard-post-title">Title *</label>
+                    <input type="text" id="dashboard-post-title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="dashboard-post-type">Content Type *</label>
+                    <select id="dashboard-post-type" name="contentType" required>
+                        <option value="">Select type...</option>
+                        <option value="blog">Blog</option>
+                        <option value="story">Story</option>
+                        <option value="news">News</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="dashboard-post-excerpt">Excerpt *</label>
+                <textarea id="dashboard-post-excerpt" name="excerpt" rows="3" required placeholder="Brief description of your content..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="dashboard-post-content">Content *</label>
+                <textarea id="dashboard-post-content" name="content" rows="15" required placeholder="Write your content here... You can use markdown formatting."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="dashboard-post-tags">Tags (comma-separated)</label>
+                <input type="text" id="dashboard-post-tags" name="tags" placeholder="e.g., education, study tips, motivation">
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" id="dashboard-save-draft-btn" class="btn btn-outline">Save as Draft</button>
+                <button type="submit" class="btn btn-primary">Publish Post</button>
+            </div>
+        </form>
+    </div>
+</div>
                     </div>
                 </div>
             </div>
@@ -107,7 +150,6 @@
     </div>
 
     <script src="script.js"></script>
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Check if already authenticated
@@ -132,11 +174,11 @@
             });
         }
 
-        // Create new post button
+        // Create new post button - now shows modal instead of redirecting
         const createPostBtn = document.getElementById('create-new-post');
         if (createPostBtn) {
             createPostBtn.addEventListener('click', function() {
-                window.location.href = 'index.html#create-post-modal';
+                showDashboardCreateModal();
             });
         }
 
@@ -155,6 +197,23 @@
                 loadPosts(this.value);
             });
         }
+
+        // Dashboard create post form
+        const dashboardCreateForm = document.getElementById('dashboard-create-post-form');
+        if (dashboardCreateForm) {
+            dashboardCreateForm.addEventListener('submit', function(e) {
+                handleDashboardCreatePost(e, true);
+            });
+        }
+
+        // Dashboard save draft button
+        const dashboardSaveDraftBtn = document.getElementById('dashboard-save-draft-btn');
+        if (dashboardSaveDraftBtn) {
+            dashboardSaveDraftBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleDashboardCreatePost(e, false);
+            });
+        }
     });
 
     function showDashboard() {
@@ -162,121 +221,101 @@
         document.getElementById('dashboard-main').style.display = 'block';
     }
 
-    function loadPosts(filter = 'all') {
-        const postsContainer = document.getElementById('posts-container');
-        postsContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Loading posts...</div>';
+    function showDashboardCreateModal() {
+        document.getElementById('dashboard-create-post-modal').classList.add('active');
+    }
 
-        // Get posts from the global posts array
-        let filteredPosts = [...window.EduBlog.posts];
-        
-        // Apply filters
-        if (filter === 'blog') {
-            filteredPosts = filteredPosts.filter(post => post.contentType === 'blog');
-        } else if (filter === 'story') {
-            filteredPosts = filteredPosts.filter(post => post.contentType === 'story');
-        } else if (filter === 'news') {
-            filteredPosts = filteredPosts.filter(post => post.contentType === 'news');
-        } else if (filter === 'published') {
-            filteredPosts = filteredPosts.filter(post => post.isPublished);
-        } else if (filter === 'drafts') {
-            filteredPosts = filteredPosts.filter(post => !post.isPublished);
+    function hideDashboardCreateModal() {
+        document.getElementById('dashboard-create-post-modal').classList.remove('active');
+        document.getElementById('dashboard-create-post-form').reset();
+        // Clear any editing state
+        const form = document.getElementById('dashboard-create-post-form');
+        delete form.dataset.editingPostId;
+        if (form.querySelector('button[type="submit"]')) {
+            form.querySelector('button[type="submit"]').textContent = 'Publish Post';
         }
+    }
 
-        // Render posts
-        setTimeout(() => {
-            postsContainer.innerHTML = '';
-            if (filteredPosts.length === 0) {
-                postsContainer.innerHTML = '<p>No posts found matching your criteria.</p>';
-                return;
+    async function handleDashboardCreatePost(e, isPublished) {
+        if (e) e.preventDefault();
+        
+        const form = document.getElementById('dashboard-create-post-form');
+        const formData = new FormData(form);
+        
+        const title = formData.get('title');
+        const contentType = formData.get('contentType');
+        const excerpt = formData.get('excerpt');
+        const content = formData.get('content');
+        const tagsString = formData.get('tags');
+        
+        if (!title || !contentType || !excerpt || !content) {
+            window.EduBlog.showToast('Please fill in all required fields.', 'error');
+            return;
+        }
+        
+        const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()) : [];
+        
+        // Check if we're editing an existing post
+        const isEditing = form.dataset.editingPostId;
+        
+        let newPost;
+        if (isEditing) {
+            // Update existing post
+            const postId = parseInt(form.dataset.editingPostId);
+            const postIndex = window.EduBlog.posts.findIndex(p => p.id === postId);
+            
+            if (postIndex !== -1) {
+                window.EduBlog.posts[postIndex] = {
+                    ...window.EduBlog.posts[postIndex],
+                    title,
+                    excerpt,
+                    content,
+                    contentType,
+                    tags,
+                    isPublished,
+                    updatedAt: new Date().toISOString()
+                };
+                newPost = window.EduBlog.posts[postIndex];
             }
-
-            filteredPosts.forEach(post => {
-                postsContainer.appendChild(createPostElement(post));
-            });
-        }, 500);
-    }
-
-    function createPostElement(post) {
-        const postElement = document.createElement('div');
-        postElement.className = 'post-item';
+        } else {
+            // Create new post
+            newPost = {
+                id: Date.now(),
+                title,
+                excerpt,
+                content,
+                contentType,
+                tags,
+                publishedAt: new Date().toISOString().split('T')[0],
+                isPublished,
+                createdAt: new Date().toISOString()
+            };
+            
+            window.EduBlog.posts.unshift(newPost);
+        }
         
-        const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        // Save posts
+        const saved = await window.EduBlog.savePostsToGist();
         
-        const statusClass = post.isPublished ? 'published' : 'draft';
-        const statusText = post.isPublished ? 'Published' : 'Draft';
+        // Update UI
+        window.EduBlog.renderPosts();
+        hideDashboardCreateModal();
+        loadPosts(document.getElementById('posts-filter').value);
         
-        postElement.innerHTML = `
-            <div class="post-header">
-                <h3>${post.title}</h3>
-                <div class="post-meta">
-                    <span class="status ${statusClass}">${statusText}</span>
-                    <span>${publishedDate}</span>
-                    <span>${post.contentType}</span>
-                </div>
-            </div>
-            <div class="post-excerpt">${post.excerpt}</div>
-            <div class="post-actions">
-                <button class="btn btn-primary" onclick="editPost(${post.id})">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-danger" onclick="deletePost(${post.id})">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-                ${!post.isPublished ? `
-                <button class="btn btn-success" onclick="publishPost(${post.id})">
-                    <i class="fas fa-check"></i> Publish
-                </button>
-                ` : ''}
-            </div>
-        `;
+        const message = isEditing ? 
+            (isPublished ? 'Post updated successfully!' : 'Changes saved as draft!') :
+            (isPublished ? 'Post published successfully!' : 'Post saved as draft!');
         
-        return postElement;
-    }
-
-    function editPost(postId) {
-        const post = window.EduBlog.posts.find(p => p.id === postId);
-        if (!post) return;
+        window.EduBlog.showToast(message);
         
-        // Fill the create post form with existing data
-        document.getElementById('post-title').value = post.title;
-        document.getElementById('post-type').value = post.contentType;
-        document.getElementById('post-excerpt').value = post.excerpt;
-        document.getElementById('post-content').value = post.content;
-        document.getElementById('post-tags').value = post.tags ? post.tags.join(', ') : '';
-        
-        // Show the modal
-        document.getElementById('create-post-modal').classList.add('active');
-        
-        // Update the form to handle updates instead of creates
-        const form = document.getElementById('create-post-form');
-        form.dataset.editingPostId = postId;
-        form.querySelector('button[type="submit"]').textContent = 'Update Post';
-    }
-
-    function deletePost(postId) {
-        if (confirm('Are you sure you want to delete this post? This cannot be undone.')) {
-            window.EduBlog.posts = window.EduBlog.posts.filter(p => p.id !== postId);
-            window.EduBlog.savePostsToGist().then(() => {
-                loadPosts(document.getElementById('posts-filter').value);
-                window.EduBlog.showToast('Post deleted successfully.');
-            });
+        // Reset form
+        form.reset();
+        delete form.dataset.editingPostId;
+        if (form.querySelector('button[type="submit"]')) {
+            form.querySelector('button[type="submit"]').textContent = 'Publish Post';
         }
     }
 
-    function publishPost(postId) {
-        const post = window.EduBlog.posts.find(p => p.id === postId);
-        if (post) {
-            post.isPublished = true;
-            post.publishedAt = new Date().toISOString().split('T')[0];
-            window.EduBlog.savePostsToGist().then(() => {
-                loadPosts(document.getElementById('posts-filter').value);
-                window.EduBlog.showToast('Post published successfully!');
-            });
-        }
-    }
+    // ... rest of your existing dashboard functions (loadPosts, createPostElement, editPost, deletePost, publishPost) ...
 </script></body>
 </html>
