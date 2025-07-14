@@ -153,28 +153,6 @@ function showPasswordModal() {
     document.getElementById('password').focus();
 }
 
-function hidePasswordModal() {
-    const modal = document.getElementById('password-modal');
-    modal.classList.remove('active');
-    document.getElementById('password-form').reset();
-}
-
-function handlePasswordSubmit(e) {
-    e.preventDefault();
-    const password = document.getElementById('password').value;
-    
-    if (password === 'kaalel') {
-        isAuthenticated = true;
-        localStorage.setItem('isAuthenticated', 'true');
-        updateAuthUI();
-        hidePasswordModal();
-        showToast('Authentication successful! You can now create posts.');
-    } else {
-        showToast('Incorrect password. Please try again.', 'error');
-        document.getElementById('password').value = '';
-        document.getElementById('password').focus();
-    }
-}
 
 // Create post functions
 function showCreatePostModal() {
@@ -207,36 +185,70 @@ async function handleCreatePost(e, isPublished = true) {
     
     const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()) : [];
     
-    const newPost = {
-        id: Date.now(),
-        title,
-        excerpt,
-        content,
-        contentType,
-        tags,
-        publishedAt: new Date().toISOString().split('T')[0],
-        isPublished
-    };
+    // Check if we're editing an existing post
+    const isEditing = form.dataset.editingPostId;
     
-    posts.unshift(newPost);
-    
-    // Save to localStorage as backup
-    localStorage.setItem('edublog-posts', JSON.stringify(posts));
-    
-    // Try to save to GitHub Gist for persistence
-    try {
-        await savePostsToGist();
-    } catch (error) {
-        console.log('Failed to save to gist, saved locally only');
+    let newPost;
+    if (isEditing) {
+        // Update existing post
+        const postId = parseInt(form.dataset.editingPostId);
+        const postIndex = posts.findIndex(p => p.id === postId);
+        
+        if (postIndex !== -1) {
+            posts[postIndex] = {
+                ...posts[postIndex],
+                title,
+                excerpt,
+                content,
+                contentType,
+                tags,
+                isPublished,
+                updatedAt: new Date().toISOString()
+            };
+            newPost = posts[postIndex];
+        }
+    } else {
+        // Create new post
+        newPost = {
+            id: Date.now(),
+            title,
+            excerpt,
+            content,
+            contentType,
+            tags,
+            publishedAt: new Date().toISOString().split('T')[0],
+            isPublished,
+            createdAt: new Date().toISOString()
+        };
+        
+        posts.unshift(newPost);
     }
     
+    // Save posts
+    const saved = await savePosts();
+    
+    // Update UI
     renderPosts();
     hideCreatePostModal();
     
-    const message = isPublished ? 'Post published successfully!' : 'Post saved as draft!';
+    const message = isEditing ? 
+        (isPublished ? 'Post updated successfully!' : 'Changes saved as draft!') :
+        (isPublished ? 'Post published successfully!' : 'Post saved as draft!');
+    
     showToast(message);
+    
+    // If we're on the dashboard, refresh the posts list
+    if (window.location.pathname.includes('dashboard.html')) {
+        loadPosts(document.getElementById('posts-filter').value);
+    }
+    
+    // Reset form
+    form.reset();
+    delete form.dataset.editingPostId;
+    if (form.querySelector('button[type="submit"]')) {
+        form.querySelector('button[type="submit"]').textContent = 'Publish Post';
+    }
 }
-
 // Function to save posts to GitHub Gist
 async function savePostsToGist() {
     // This function will be used to save posts to a GitHub Gist
