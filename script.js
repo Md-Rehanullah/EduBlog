@@ -36,12 +36,24 @@ function showErrorMessage(message) {
     }
 }
 
+// In your script.js file, update the initializeWithCloudData function:
+
 async function initializeWithCloudData() {
     try {
-        // Show loading state if element exists
+        // Show loading state
         const loadingElement = document.getElementById('content-loading');
         if (loadingElement) {
             loadingElement.style.display = 'block';
+        }
+        
+        // Force refresh from cloud if possible
+        if (typeof API.refresh === 'function') {
+            try {
+                await API.refresh();
+                console.log("Successfully refreshed data from cloud");
+            } catch (refreshError) {
+                console.warn("Couldn't refresh from cloud:", refreshError);
+            }
         }
         
         // Initialize app with data
