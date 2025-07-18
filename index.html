@@ -271,10 +271,35 @@
     </button>
 
     <!-- Scripts -->
-    <!-- Before closing body tag -->
-    <script src="cloud-storage.js"></script> <!-- Load first -->
-    <script src="api.js"></script> <!-- Load second -->
-    <script src="script.js"></script> <!-- Load last -->
+   <!-- Add this before the closing body tag, replacing any existing script tags -->
+<div id="content-loading" class="loading-container" style="display: none; text-align: center; padding: 20px;">
+    <i class="fas fa-spinner fa-spin"></i> Loading content...
+</div>
+
+<!-- Load scripts in correct order -->
+<script src="cloud-storage.js"></script>
+<script>
+    // Verify CloudStorage is properly loaded
+    if (typeof CloudStorage === 'undefined') {
+        console.error('CloudStorage module failed to initialize properly!');
+        // Create fallback implementation
+        window.CloudStorage = {
+            save: async function(data) {
+                localStorage.setItem('edublog-posts', JSON.stringify(data));
+                return { success: true };
+            },
+            load: async function() {
+                const data = localStorage.getItem('edublog-posts');
+                return data ? JSON.parse(data) : [];
+            }
+        };
+        console.log('Created fallback CloudStorage implementation');
+    } else {
+        console.log('CloudStorage loaded successfully');
+    }
+</script>
+<script src="api.js"></script>
+<script src="script.js"></script>
 
     
 </body>
