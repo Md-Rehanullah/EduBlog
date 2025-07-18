@@ -14,7 +14,7 @@
         <nav class="nav">
             <div class="nav-container">
                 <div class="nav-brand">
-                    <h1>EduBlog</h1>
+                    <a href="index.html"><h1>EduBlog</h1></a>
                 </div>
                 
                 <div class="nav-menu" id="nav-menu">
@@ -28,12 +28,14 @@
                     <a href="dashboard.html" class="nav-link">Dashboard</a>                    
                 </div>
                 
-               
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </nav>
     </header>
 
- <!-- Hero Section -->
+    <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="hero-container">
             <div class="hero-content">
@@ -51,17 +53,54 @@
         </div>
     </section>
 
-            
+    <!-- Featured Content -->
+    <section class="featured-content">
+        <div class="container">
+            <h2 class="section-title">Featured Content</h2>
+            <div class="featured-grid">
+                <div class="featured-card">
+                    <div class="featured-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3>Educational Blogs</h3>
+                    <p>In-depth articles on study techniques, learning strategies, and academic success tips.</p>
+                    <a href="#blogs" class="featured-link">Read Blogs <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="featured-card">
+                    <div class="featured-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3>Inspiring Stories</h3>
+                    <p>Real student journeys of overcoming challenges and achieving academic excellence.</p>
+                    <a href="#stories" class="featured-link">Read Stories <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="featured-card">
+                    <div class="featured-icon">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <h3>Education News</h3>
+                    <p>Latest updates on scholarships, educational opportunities, and academic developments.</p>
+                    <a href="#news" class="featured-link">Read News <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Content Grid -->
     <section id="content" class="content-section">
         <div class="container">
+            <!-- Loading Indicator -->
+            <div id="content-loading" class="loading-container">
+                <i class="fas fa-spinner fa-spin"></i> Loading content...
+            </div>
+            
             <!-- Blogs Section -->
             <div id="blogs" class="content-category">
                 <h2 class="category-title">Educational Blogs</h2>
                 <div class="content-grid" id="blogs-grid">
                     <!-- Blog posts will be loaded here -->
                 </div>
+                <div class="pagination" id="blogs-pagination"></div>
             </div>
 
             <!-- Stories Section -->
@@ -70,6 +109,7 @@
                 <div class="content-grid" id="stories-grid">
                     <!-- Story posts will be loaded here -->
                 </div>
+                <div class="pagination" id="stories-pagination"></div>
             </div>
 
             <!-- News Section -->
@@ -78,6 +118,7 @@
                 <div class="content-grid" id="news-grid">
                     <!-- News posts will be loaded here -->
                 </div>
+                <div class="pagination" id="news-pagination"></div>
             </div>
         </div>
     </section>
@@ -196,26 +237,25 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024 EduBlog. All rights reserved. Built with passion for education.</p>
+                <p>&copy; 2025 EduBlog. All rights reserved. Built with passion for education.</p>
             </div>
         </div>
     </footer>
 
-  <script src="api.js"></script>
-    <script src="script.js"></script>
-    
-<!-- Post Modal for viewing content -->
-<div id="post-modal" class="modal">
-    <div class="modal-content large">
-        <div class="modal-header">
-            <button type="button" class="close-btn" onclick="closePostModal()">&times;</button>
+    <!-- Post Modal -->
+    <div id="post-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <button class="close-btn" onclick="closePostModal()">&times;</button>
+            </div>
+            <article id="modal-post-content" class="post-content">
+                <!-- Post content will be loaded here -->
+            </article>
         </div>
-        <article id="post-content" class="post-content">
-            <!-- Post content will be loaded here -->
-        </article>
     </div>
-</div>
-  
-    
+
+    <!-- IMPORTANT: Load API.js first, then script.js -->
+    <script src="api.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
