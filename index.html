@@ -232,115 +232,21 @@
         </div>
     </footer>
 
-    <!-- Password Modal -->
-    <div id="password-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <i class="fas fa-shield-alt modal-icon"></i>
-                <h2>Protected Content Area</h2>
-                <p>This section is password-protected. Please authenticate to access the content creation dashboard.</p>
-            </div>
-            <form id="password-form" class="password-form">
-                <div class="form-group">
-                    <label for="password">Enter Password:</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" id="cancel-btn" class="btn btn-outline">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Authenticate</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Create Post Modal -->
-    <div id="create-post-modal" class="modal">
-        <div class="modal-content large">
-            <div class="modal-header">
-                <h2>Create New Post</h2>
-                <button type="button" id="close-create-modal" class="close-btn">&times;</button>
-            </div>
-            <form id="create-post-form" class="create-post-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="post-title">Title *</label>
-                        <input type="text" id="post-title" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-type">Content Type *</label>
-                        <select id="post-type" name="contentType" required>
-                            <option value="">Select type...</option>
-                            <option value="blog">Blog</option>
-                            <option value="story">Story</option>
-                            <option value="news">News</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="post-excerpt">Excerpt *</label>
-                    <textarea id="post-excerpt" name="excerpt" rows="3" required placeholder="Brief description of your content..."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="post-content">Content *</label>
-                    <textarea id="post-content" name="content" rows="15" required placeholder="Write your content here... You can use markdown formatting."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="post-tags">Tags (comma-separated)</label>
-                    <input type="text" id="post-tags" name="tags" placeholder="e.g., education, study tips, motivation">
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" id="save-draft-btn" class="btn btn-outline">Save as Draft</button>
-                    <button type="submit" class="btn btn-primary">Publish Post</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Success Toast -->
-    <div id="success-toast" class="toast">
-        <i class="fas fa-check-circle"></i>
-        <span id="toast-message">Success!</span>
-    </div>
-
-
+  <script src="api.js"></script>
     <script src="script.js"></script>
     
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the create post modal
-        const createPostModal = document.getElementById('create-post-modal');
-        const closeCreateModal = document.getElementById('close-create-modal');
-        
-        if (closeCreateModal) {
-            closeCreateModal.addEventListener('click', function() {
-                createPostModal.classList.remove('active');
-                document.getElementById('create-post-form').reset();
-            });
-        }
-        
-        // Handle create post form submission
-        const createPostForm = document.getElementById('create-post-form');
-        if (createPostForm) {
-            createPostForm.addEventListener('submit', function(e) {
-                handleCreatePost(e, true);
-            });
-        }
-        
-        // Handle save draft button
-        const saveDraftBtn = document.getElementById('save-draft-btn');
-        if (saveDraftBtn) {
-            saveDraftBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                handleCreatePost(e, false);
-            });
-        }
-    });
-</script>
+<!-- Post Modal for viewing content -->
+<div id="post-modal" class="modal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <button type="button" class="close-btn" onclick="closePostModal()">&times;</button>
+        </div>
+        <article id="post-content" class="post-content">
+            <!-- Post content will be loaded here -->
+        </article>
+    </div>
+</div>
+  
     
 </body>
 </html>
