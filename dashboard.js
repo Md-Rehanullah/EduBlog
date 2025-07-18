@@ -1,390 +1,561 @@
-let posts = [];
-let isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-let currentPostId = null;
+/**
+ * EduBlog Dashboard Script
+ * Handles the functionality of the admin dashboard
+ */
 
-// Initialize the dashboard
+// Keep track of pagination and current state
+const dashboardState = {
+    currentPage: 1,
+    postsPerPage: 10,
+    currentPostId: null,
+    filterType: 'all',
+    filterStatus: 'all',
+    csrfToken: '',
+    isInitialized: false
+};
+
 document.addEventListener('DOMContentLoaded', function() {
-    checkAuth();
-    setupEventListeners();
-    if (isAuthenticated) {
-        loadPosts();
-    }
+    // Initialize the dashboard
+    initDashboard();
 });
 
-// Check authentication status
-function checkAuth() {
-    if (isAuthenticated) {
-        document.getElementById('password-section').style.display = 'none';
-        document.getElementById('dashboard-content').style.display = 'block';
+// Initialize dashboard functionality
+function initDashboard() {
+    // Generate and set CSRF tokens
+    dashboardState.csrfToken = API.generateCsrfToken();
+    document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
+        input.value = dashboardState.csrfToken;
+    });
+    
+    // Check authentication status
+    checkAuthStatus();
+    
+    // Set up event listeners
+    setupDashboardEventListeners();
+}
+
+// Check if the user is authenticated
+function checkAuthStatus() {
+    if (API.auth.isAuthenticated()) {
+        showDashboard();
+        
+        // Display username
+        const usernameDisplay = document.getElementById('username-display');
+        if (usernameDisplay) {
+            usernameDisplay.textContent = API.auth.getCurrentUser() || 'Admin';
+        }
+        
+        // Initialize dashboard content
+        loadDashboardContent();
     } else {
-        document.getElementById('password-section').style.display = 'block';
-        document.getElementById('dashboard-content').style.display = 'none';
+        showLoginSection();
     }
 }
 
-// Setup event listeners
-function setupEventListeners() {
-    // Password form submission
-    const passwordForm = document.getElementById('dashboard-password-form');
-    if (passwordForm) {
-        passwordForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const password = document.getElementById('dashboard-password').value;
-            // UPDATED PASSWORD HERE:
-            if (password === 'admin123') {
-                isAuthenticated = true;
-                localStorage.setItem('isAuthenticated', 'true');
-                checkAuth();
-                loadPosts();
-            } else {
-                alert('Incorrect password. Please try again.');
-                document.getElementById('dashboard-password').value = '';
-            }
-        });
+// Set up all event listeners for the dashboard
+function setupDashboardEventListeners() {
+    // Login form submission
+    const loginForm = document.getElementById('dashboard-login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleDashboardLogin);
     }
-
-    // Create/Edit post form submission
-    const createPostForm = document.getElementById('create-post-form');
-    if (createPostForm) {
-        createPostForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            savePost();
-        });
+    
+    // Logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
     }
-
+    
+    // Post form submission
+    const postForm = document.getElementById('create-post-form');
+    if (postForm) {
+        postForm.addEventListener('submit', handleSavePost);
+    }
+    
     // Reset form button
     const resetFormBtn = document.getElementById('reset-form-btn');
     if (resetFormBtn) {
-        resetFormBtn.addEventListener('click', resetForm);
+        resetFormBtn.addEventListener('click', resetPostForm);
     }
-
-    // Filter change events
-    document.getElementById('filter-type').addEventListener('change', filterPosts);
-    document.getElementById('filter-status').addEventListener('change', filterPosts);
     
-    // Confirmation modal buttons
-    document.getElementById('cancel-action').addEventListener('click', closeModal);
-    document.getElementById('confirm-action').addEventListener('click', executeAction);
+    // Filtering
+    document.getElementById('filter-type')?.addEventListener('change', handleFilterChange);
+    document.getElementById('filter-status')?.addEventListener('change', handleFilterChange);
+    document.getElementById('refresh-posts-btn')?.addEventListener('click', refreshPosts);
+    
+    // Confirmation modal
+    document.getElementById('cancel-action')?.addEventListener('click', closeConfirmationModal);
+    document.getElementById('close-confirmation-modal')?.addEventListener('click', closeConfirmationModal);
+    document.getElementById('confirm-action')?.addEventListener('click', executeConfirmedAction);
+    
+    // Toast close button
+    document.querySelector('.toast-close')?.addEventListener('click', () => {
+        document.getElementById('dashboard-toast').classList.remove('show');
+    });
+    
+    // Mobile navigation toggle
+    const navToggle = document.getElementById('nav-toggle');
+    const navMenu = document.getElementById('nav-menu');
+    
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+    }
 }
 
-// ... rest of your file remains unchanged ...
+// Handle dashboard login
+async function handleDashboardLogin(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('dashboard-username').value;
+    const password = document.getElementById('dashboard-password').value;
+    const errorElement = document.getElementById('login-error-message');
+    
+    // Reset error message
+    if (errorElement) {
+        errorElement.textContent = '';
+        errorElement.classList.add('hidden');
+    }
+    
+    try {
+        const result = await API.auth.login({ username, password });
+        
+        if (result.success) {
+            showToast(`Welcome, ${result.username}!`);
+            showDashboard();
+            loadDashboardContent();
+        }
+    } catch (error) {
+        if (errorElement) {
+            errorElement.textContent = error.error || 'Invalid login credentials';
+            errorElement.classList.remove('hidden');
+        } else {
+            showToast('Login failed. Invalid username or password.', 'error');
+        }
+    }
+}
 
-// Load posts from storage
+// Handle logout
+function handleLogout() {
+    API.auth.logout();
+    showToast('You have been logged out successfully');
+    showLoginSection();
+}
+
+// Show the login section, hide dashboard
+function showLoginSection() {
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('dashboard-content').classList.add('hidden');
+}
+
+// Show the dashboard, hide login section
+function showDashboard() {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('dashboard-content').classList.remove('hidden');
+}
+
+// Load dashboard content
+function loadDashboardContent() {
+    // Update statistics
+    updateStats();
+    
+    // Load posts
+    loadPosts();
+}
+
+// Update dashboard statistics
+function updateStats() {
+    try {
+        const stats = API.posts.getStats();
+        
+        document.getElementById('total-posts').textContent = stats.totalPosts;
+        document.getElementById('published-posts').textContent = stats.publishedPosts;
+        document.getElementById('draft-posts').textContent = stats.draftPosts;
+    } catch (error) {
+        console.error('Error updating stats:', error);
+    }
+}
+
+// Load posts with current filters and pagination
 function loadPosts() {
     try {
-        // Try to load from GitHub Gist
-        fetch('https://api.github.com/gists/6e5ce45bf729f33d108030b9e1fb6c74.js')
-            .then(response => response.ok ? response.json() : Promise.reject('Failed to load from Gist'))
-            .then(gistData => {
-                const postsContent = gistData.files['edublog-posts.json'].content;
-                posts = JSON.parse(postsContent);
-                renderPosts();
-                updateStats();
-            })
-            .catch(error => {
-                console.error('Failed to load from Gist:', error);
-                // Fallback to localStorage
-                const savedPosts = localStorage.getItem('edublog-posts');
-                if (savedPosts) {
-                    posts = JSON.parse(savedPosts);
-                    renderPosts();
-                    updateStats();
-                } else {
-                    document.getElementById('posts-list').innerHTML = '<div class="no-posts">No posts found. Create your first post!</div>';
-                }
-            });
+        const postsListElement = document.getElementById('posts-list');
+        if (!postsListElement) return;
+        
+        // Show loading state
+        postsListElement.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading posts...</div>';
+        
+        // Get filters
+        const contentType = dashboardState.filterType !== 'all' ? dashboardState.filterType : null;
+        const isPublished = dashboardState.filterStatus === 'published' ? true :
+                           dashboardState.filterStatus === 'draft' ? false : null;
+        
+        // Get posts with pagination
+        const result = API.posts.getPosts({
+            page: dashboardState.currentPage,
+            limit: dashboardState.postsPerPage,
+            contentType,
+            isPublished,
+            sortBy: 'updatedAt',
+            sortOrder: 'desc'
+        });
+        
+        renderPosts(result.posts, result.pagination);
     } catch (error) {
         console.error('Error loading posts:', error);
-        document.getElementById('posts-list').innerHTML = '<div class="error">Error loading posts. Please try again.</div>';
+        document.getElementById('posts-list').innerHTML = 
+            '<div class="error-state">Error loading posts. Please try again.</div>';
     }
 }
 
-// Render posts in the list
-function renderPosts() {
-    const postsList = document.getElementById('posts-list');
-    if (!postsList) return;
+// Render posts to the posts list
+function renderPosts(posts, pagination) {
+    const postsListElement = document.getElementById('posts-list');
+    const paginationElement = document.getElementById('posts-pagination');
     
-    // Get filter values
-    const typeFilter = document.getElementById('filter-type').value;
-    const statusFilter = document.getElementById('filter-status').value;
+    if (!postsListElement) return;
     
-    // Filter posts
-    let filteredPosts = [...posts];
-    if (typeFilter !== 'all') {
-        filteredPosts = filteredPosts.filter(post => post.contentType === typeFilter);
-    }
-    if (statusFilter !== 'all') {
-        const isPublished = statusFilter === 'published';
-        filteredPosts = filteredPosts.filter(post => post.isPublished === isPublished);
-    }
+    // Clear current content
+    postsListElement.innerHTML = '';
     
-    // Sort by date (newest first)
-    filteredPosts.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-    
-    // Render posts
-    if (filteredPosts.length === 0) {
-        postsList.innerHTML = '<div class="no-posts">No posts match the selected filters.</div>';
+    // Handle empty state
+    if (posts.length === 0) {
+        postsListElement.innerHTML = '<div class="empty-state">No posts match the selected filters.</div>';
+        if (paginationElement) paginationElement.innerHTML = '';
         return;
     }
     
-    postsList.innerHTML = '';
+    // Create post items
+    posts.forEach(post => {
+        const postElement = createPostElement(post);
+        postsListElement.appendChild(postElement);
+    });
     
-    filteredPosts.forEach(post => {
-        const postElement = document.createElement('div');
-        postElement.className = 'post-item';
-        postElement.dataset.id = post.id;
-        
-        const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
+    // Render pagination if provided and if there are multiple pages
+    if (paginationElement && pagination && pagination.totalPages > 1) {
+        renderPagination(paginationElement, pagination, (page) => {
+            dashboardState.currentPage = page;
+            loadPosts();
         });
-        
-        const statusBadge = post.isPublished ? 
-            '<span class="status-badge published">Published</span>' : 
-            '<span class="status-badge draft">Draft</span>';
-        
-        const typeLabel = post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1);
-        
-        postElement.innerHTML = `
-            <div class="post-header">
-                <h3 class="post-title">${post.title}</h3>
-                <div class="post-meta">
-                    ${statusBadge}
-                    <span class="post-type">${typeLabel}</span>
-                    <span class="post-date">${publishedDate}</span>
-                </div>
+    } else if (paginationElement) {
+        paginationElement.innerHTML = '';
+    }
+}
+
+// Create an individual post element
+function createPostElement(post) {
+    const element = document.createElement('div');
+    element.className = 'post-item';
+    element.setAttribute('data-id', post.id);
+    
+    const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+    
+    const statusBadge = post.isPublished ? 
+        '<span class="status-badge published">Published</span>' : 
+        '<span class="status-badge draft">Draft</span>';
+    
+    const typeLabel = post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1);
+    
+    element.innerHTML = `
+        <div class="post-header">
+            <h3 class="post-title">${post.title}</h3>
+            <div class="post-meta">
+                ${statusBadge}
+                <span class="post-type">${typeLabel}</span>
+                <span class="post-date"><i class="fas fa-calendar"></i> ${publishedDate}</span>
             </div>
-            <div class="post-excerpt">${post.excerpt}</div>
-            <div class="post-actions">
-                <button class="btn btn-sm btn-edit" data-id="${post.id}">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn btn-sm btn-delete" data-id="${post.id}">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-                ${post.isPublished ? `
-                <button class="btn btn-sm btn-view" data-id="${post.id}">
-                    <i class="fas fa-eye"></i> View
-                </button>
-                ` : ''}
-            </div>
-        `;
+        </div>
+        <div class="post-excerpt">${post.excerpt}</div>
+        <div class="post-actions">
+            <button class="btn btn-sm btn-edit" data-id="${post.id}" aria-label="Edit post">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger" data-id="${post.id}" aria-label="Delete post">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+            <button class="btn btn-sm btn-view" data-id="${post.id}" aria-label="View post">
+                <i class="fas fa-eye"></i> View
+            </button>
+        </div>
+    `;
+    
+    // Add event listeners
+    element.querySelector('.btn-edit').addEventListener('click', () => editPost(post.id));
+    element.querySelector('.btn-danger').addEventListener('click', () => confirmDeletePost(post.id));
+    element.querySelector('.btn-view').addEventListener('click', () => viewPost(post.id));
+    
+    return element;
+}
+
+// Render pagination controls
+function renderPagination(element, pagination, onPageChange) {
+    element.innerHTML = '';
+    
+    if (pagination.totalPages <= 1) return;
+    
+    const ul = document.createElement('ul');
+    ul.className = 'pagination-list';
+    
+    // Previous button
+    const prevLi = document.createElement('li');
+    const prevButton = document.createElement('button');
+    prevButton.innerHTML = '<i class="fas fa-chevron-left"></i> Prev';
+    prevButton.className = 'pagination-link';
+    prevButton.disabled = pagination.page <= 1;
+    prevButton.setAttribute('aria-label', 'Previous page');
+    prevButton.addEventListener('click', () => onPageChange(pagination.page - 1));
+    prevLi.appendChild(prevButton);
+    ul.appendChild(prevLi);
+    
+    // Page numbers
+    const maxPages = Math.min(5, pagination.totalPages);
+    let startPage = Math.max(1, pagination.page - 2);
+    let endPage = Math.min(pagination.totalPages, startPage + maxPages - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxPages - 1) {
+        startPage = Math.max(1, endPage - maxPages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.className = 'pagination-link' + (i === pagination.page ? ' active' : '');
+        button.setAttribute('aria-label', `Page ${i}`);
+        button.setAttribute('aria-current', i === pagination.page ? 'page' : 'false');
+        button.addEventListener('click', () => onPageChange(i));
+        li.appendChild(button);
+        ul.appendChild(li);
+    }
+    
+    // Next button
+    const nextLi = document.createElement('li');
+    const nextButton = document.createElement('button');
+    nextButton.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+    nextButton.className = 'pagination-link';
+    nextButton.disabled = pagination.page >= pagination.totalPages;
+    nextButton.setAttribute('aria-label', 'Next page');
+    nextButton.addEventListener('click', () => onPageChange(pagination.page + 1));
+    nextLi.appendChild(nextButton);
+    ul.appendChild(nextLi);
+    
+    element.appendChild(ul);
+}
+
+// Handle filter changes
+function handleFilterChange() {
+    dashboardState.filterType = document.getElementById('filter-type').value;
+    dashboardState.filterStatus = document.getElementById('filter-status').value;
+    dashboardState.currentPage = 1; // Reset to first page when filtering
+    loadPosts();
+}
+
+// Refresh posts list
+function refreshPosts() {
+    loadPosts();
+    showToast('Posts refreshed');
+}
+
+// Edit a post
+function editPost(postId) {
+    try {
+        const post = API.posts.getPostById(postId);
+        if (!post) {
+            showToast('Post not found', 'error');
+            return;
+        }
         
-        postsList.appendChild(postElement);
-    });
-    
-    // Add event listeners to action buttons
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const postId = parseInt(this.dataset.id);
-            editPost(postId);
-        });
-    });
-    
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const postId = parseInt(this.dataset.id);
-            confirmDelete(postId);
-        });
-    });
-    
-    document.querySelectorAll('.btn-view').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const postId = parseInt(this.dataset.id);
-            window.open(`index.html#post-${postId}`, '_blank');
-        });
-    });
+        // Update form title
+        document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Edit Post';
+        
+        // Fill form with post data
+        document.getElementById('post-title').value = post.title;
+        document.getElementById('post-type').value = post.contentType;
+        document.getElementById('post-excerpt').value = post.excerpt;
+        document.getElementById('post-content').value = post.content;
+        document.getElementById('post-tags').value = post.tags ? post.tags.join(', ') : '';
+        document.getElementById('post-image').value = post.imageUrl || '';
+        document.getElementById('post-published').checked = post.isPublished;
+        document.getElementById('post-id').value = post.id;
+        
+        // Update submit button text
+        document.querySelector('#create-post-form button[type="submit"]').textContent = 'Update Post';
+        
+        // Store current post id
+        dashboardState.currentPostId = post.id;
+        
+        // Scroll to form
+        document.querySelector('.dashboard-form-section').scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+        console.error('Error editing post:', error);
+        showToast('Failed to load post data', 'error');
+    }
 }
 
-// Filter posts based on selections
-function filterPosts() {
-    renderPosts();
-}
-
-// Update statistics
-function updateStats() {
-    const totalPosts = posts.length;
-    const publishedPosts = posts.filter(post => post.isPublished).length;
-    const draftPosts = totalPosts - publishedPosts;
+// Reset post form
+function resetPostForm() {
+    // Reset form fields
+    document.getElementById('create-post-form').reset();
+    document.getElementById('post-id').value = '';
     
-    document.getElementById('total-posts').textContent = totalPosts;
-    document.getElementById('published-posts').textContent = publishedPosts;
-    document.getElementById('draft-posts').textContent = draftPosts;
+    // Reset form title and button
+    document.getElementById('form-title').innerHTML = '<i class="fas fa-plus-circle"></i> Create New Post';
+    document.querySelector('#create-post-form button[type="submit"]').textContent = 'Save Post';
+    
+    // Reset stored post id
+    dashboardState.currentPostId = null;
 }
 
-// Save or update a post
-function savePost() {
+// Handle save post form submission
+async function handleSavePost(e) {
+    e.preventDefault();
+    
+    // Check CSRF token
+    const token = document.getElementById('post-csrf-token').value;
+    if (!API.verifyCsrfToken(token)) {
+        showToast('Security validation failed. Please refresh the page and try again.', 'error');
+        return;
+    }
+    
     const form = document.getElementById('create-post-form');
     const formData = new FormData(form);
     
-    const title = formData.get('title');
-    const contentType = formData.get('contentType');
-    const excerpt = formData.get('excerpt');
-    const content = formData.get('content');
-    const tagsString = formData.get('tags');
-    const imageUrl = formData.get('image');
-    const isPublished = formData.get('published') === 'on';
-    const postId = formData.get('id') || Date.now();
-    
-    if (!title || !contentType || !excerpt || !content) {
-        alert('Please fill in all required fields.');
+    try {
+        // Gather post data
+        const postData = {
+            title: formData.get('title'),
+            contentType: formData.get('contentType'),
+            excerpt: formData.get('excerpt'),
+            content: formData.get('content'),
+            tags: formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()) : [],
+            imageUrl: formData.get('image') || null,
+            isPublished: formData.get('published') === 'on'
+        };
+        
+        // Validate required fields
+        if (!postData.title || !postData.contentType || !postData.excerpt || !postData.content) {
+            showToast('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        // Check if we're updating or creating
+        const postId = formData.get('id');
+        let result;
+        
+        if (postId) {
+            // Update existing post
+            result = API.posts.updatePost(postId, postData);
+            showToast(`Post "${result.title}" updated successfully`);
+        } else {
+            // Create new post
+            result = API.posts.createPost(postData);
+            showToast(`Post "${result.title}" created successfully`);
+        }
+        
+        // Reset form
+        resetPostForm();
+        
+        // Refresh posts list and stats
+        loadPosts();
+        updateStats();
+    } catch (error) {
+        console.error('Error saving post:', error);
+        showToast(`Failed to save post: ${error.message || 'Unknown error'}`, 'error');
+    }
+}
+
+// Confirm post deletion
+function confirmDeletePost(postId) {
+    const post = API.posts.getPostById(postId);
+    if (!post) {
+        showToast('Post not found', 'error');
         return;
     }
     
-    const tags = tagsString ? tagsString.split(',').map(tag => tag.trim()) : [];
+    // Set confirmation message
+    document.getElementById('confirmation-message').textContent = 
+        `Are you sure you want to delete the post "${post.title}"? This action cannot be undone.`;
     
-    const postData = {
-        id: parseInt(postId),
-        title,
-        excerpt,
-        content,
-        contentType,
-        tags,
-        imageUrl: imageUrl || null,
-        publishedAt: new Date().toISOString().split('T')[0],
-        isPublished
-    };
-    
-    // Check if we're updating an existing post
-    const existingIndex = posts.findIndex(p => p.id === postData.id);
-    if (existingIndex !== -1) {
-        // Update existing post
-        posts[existingIndex] = postData;
-    } else {
-        // Add new post
-        posts.unshift(postData);
-    }
-    
-    // Save to localStorage
-    localStorage.setItem('edublog-posts', JSON.stringify(posts));
-    
-    // Try to save to GitHub Gist
-    saveToGist();
-    
-    // Update UI
-    renderPosts();
-    updateStats();
-    resetForm();
-    
-    alert(`Post "${title}" has been ${existingIndex !== -1 ? 'updated' : 'created'} successfully!`);
-}
-
-// Edit an existing post
-function editPost(postId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-    
-    // Fill the form with post data
-    document.getElementById('post-id').value = post.id;
-    document.getElementById('post-title').value = post.title;
-    document.getElementById('post-type').value = post.contentType;
-    document.getElementById('post-excerpt').value = post.excerpt;
-    document.getElementById('post-content').value = post.content;
-    document.getElementById('post-tags').value = post.tags ? post.tags.join(', ') : '';
-    document.getElementById('post-image').value = post.imageUrl || '';
-    document.getElementById('post-published').checked = post.isPublished;
-    
-    // Scroll to form
-    document.getElementById('create-post-form').scrollIntoView({ behavior: 'smooth' });
-    
-    // Update button text
-    document.querySelector('#create-post-form button[type="submit"]').textContent = 'Update Post';
-    document.querySelector('.dashboard-form-section h2').innerHTML = '<i class="fas fa-edit"></i> Edit Post';
-    
-    currentPostId = postId;
-}
-
-// Confirm deletion of a post
-function confirmDelete(postId) {
-    const post = posts.find(p => p.id === postId);
-    if (!post) return;
-    
-    document.getElementById('confirmation-message').textContent = `Are you sure you want to delete the post "${post.title}"? This action cannot be undone.`;
-    document.getElementById('confirm-action').dataset.id = postId;
+    // Store post id for confirmation handler
+    document.getElementById('confirm-action').setAttribute('data-id', postId);
     
     // Show modal
     document.getElementById('confirmation-modal').classList.add('active');
 }
 
-// Execute the deletion after confirmation
-function executeAction() {
-    const postId = parseInt(this.dataset.id);
-    deletePost(postId);
-    closeModal();
-}
-
-// Delete a post
-function deletePost(postId) {
-    const postIndex = posts.findIndex(p => p.id === postId);
-    if (postIndex === -1) return;
-    
-    const postTitle = posts[postIndex].title;
-    posts.splice(postIndex, 1);
-    
-    // Save to localStorage
-    localStorage.setItem('edublog-posts', JSON.stringify(posts));
-    
-    // Try to save to GitHub Gist
-    saveToGist();
-    
-    // Update UI
-    renderPosts();
-    updateStats();
-    
-    alert(`Post "${postTitle}" has been deleted successfully!`);
-    
-    // Reset form if we were editing the deleted post
-    if (currentPostId === postId) {
-        resetForm();
-    }
-}
-
 // Close confirmation modal
-function closeModal() {
+function closeConfirmationModal() {
     document.getElementById('confirmation-modal').classList.remove('active');
 }
 
-// Reset the form
-function resetForm() {
-    document.getElementById('create-post-form').reset();
-    document.getElementById('post-id').value = '';
-    document.querySelector('#create-post-form button[type="submit"]').textContent = 'Save Post';
-    document.querySelector('.dashboard-form-section h2').innerHTML = '<i class="fas fa-plus-circle"></i> Create New Post';
-    currentPostId = null;
-}
-
-// Save posts to GitHub Gist
-async function saveToGist() {
-    // This function would actually save to GitHub Gist
-    // For now, we'll just simulate it
-    console.log('Posts would be saved to GitHub Gist here');
-  
-    const gistData = {
-        files: {
-            'edublog-posts.json': {
-                content: JSON.stringify(posts)
-            }
-        }
-    };
+// Execute confirmed action (delete post)
+function executeConfirmedAction() {
+    const postId = document.getElementById('confirm-action').getAttribute('data-id');
     
     try {
-        const response = await fetch('https://api.github.com/gists/6e5ce45bf729f33d108030b9e1fb6c74.js', {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `token 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',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(gistData)
-        });
+        // Delete the post
+        const deletedPost = API.posts.deletePost(postId);
         
-        if (!response.ok) {
-            throw new Error('Failed to save to Gist');
+        // Close modal
+        closeConfirmationModal();
+        
+        // Show success message
+        showToast(`Post "${deletedPost.title}" was deleted successfully`);
+        
+        // Refresh posts and stats
+        loadPosts();
+        updateStats();
+        
+        // Reset form if we were editing the deleted post
+        if (dashboardState.currentPostId === parseInt(postId)) {
+            resetPostForm();
         }
-        
-        console.log('Posts saved to GitHub Gist successfully');
     } catch (error) {
-        console.error('Error saving to Gist:', error);
+        console.error('Error deleting post:', error);
+        showToast('Failed to delete post', 'error');
+        closeConfirmationModal();
     }
-   
+}
+
+// View a post
+function viewPost(postId) {
+    const post = API.posts.getPostById(postId);
+    if (!post) {
+        showToast('Post not found', 'error');
+        return;
+    }
+    
+    // Open post in new tab/window
+    const url = `index.html?post=${postId}`;
+    window.open(url, '_blank');
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('dashboard-toast');
+    const toastMessage = document.getElementById('dashboard-toast-message');
+    const toastIcon = document.getElementById('dashboard-toast-icon');
+    
+    toastMessage.textContent = message;
+    toast.className = `toast show ${type}`;
+    
+    // Update icon based on type
+    if (type === 'error') {
+        toastIcon.className = 'fas fa-exclamation-circle';
+    } else if (type === 'warning') {
+        toastIcon.className = 'fas fa-exclamation-triangle';
+    } else {
+        toastIcon.className = 'fas fa-check-circle';
+    }
+    
+    // Auto hide after 4 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
 }
