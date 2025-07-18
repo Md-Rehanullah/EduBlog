@@ -7,6 +7,8 @@
     <meta name="description" content="Discover educational blogs, inspiring stories, and latest news in education. Connect with educators and access comprehensive learning resources.">
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- CSP for added security -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://api.formspree.io;">
 </head>
 <body>
     <!-- Header -->
@@ -18,22 +20,24 @@
                 </div>
                 
                 <div class="nav-menu" id="nav-menu">
-                    <a href="#home" class="nav-link">Home</a>
+                    <a href="#home" class="nav-link" aria-current="page">Home</a>
                     <a href="about.html" class="nav-link">About</a>
                     <a href="#content" class="nav-link">Content</a>
                     <a href="#contact" class="nav-link">Contact</a>
                     <a href="privacy-policy.html" class="nav-link">Privacy</a>
                     <a href="terms-conditions.html" class="nav-link">Terms</a>
                     <a href="sitemap.html" class="nav-link">Sitemap</a>
-                    <a href="dashboard.html" class="nav-link">Dashboard</a>                    
+                    <a href="dashboard.html" id="dashboard-link" class="nav-link hidden">Dashboard</a>                    
                 </div>
                 
-               
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </nav>
     </header>
 
- <!-- Hero Section -->
+    <!-- Hero Section -->
     <section id="home" class="hero">
         <div class="hero-container">
             <div class="hero-content">
@@ -87,12 +91,19 @@
     <!-- Content Grid -->
     <section id="content" class="content-section">
         <div class="container">
+            <!-- Loading State -->
+            <div id="content-loading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Loading content...</p>
+            </div>
+            
             <!-- Blogs Section -->
             <div id="blogs" class="content-category">
                 <h2 class="category-title">Educational Blogs</h2>
                 <div class="content-grid" id="blogs-grid">
                     <!-- Blog posts will be loaded here -->
                 </div>
+                <div class="pagination" id="blogs-pagination"></div>
             </div>
 
             <!-- Stories Section -->
@@ -101,6 +112,7 @@
                 <div class="content-grid" id="stories-grid">
                     <!-- Story posts will be loaded here -->
                 </div>
+                <div class="pagination" id="stories-pagination"></div>
             </div>
 
             <!-- News Section -->
@@ -109,6 +121,7 @@
                 <div class="content-grid" id="news-grid">
                     <!-- News posts will be loaded here -->
                 </div>
+                <div class="pagination" id="news-pagination"></div>
             </div>
         </div>
     </section>
@@ -147,6 +160,9 @@
                 </div>
 
                 <form class="contact-form" id="contact-form">
+                    <!-- CSRF Token -->
+                    <input type="hidden" name="csrf_token" id="csrf-token" value="">
+                    
                     <div class="form-group">
                         <label for="studentName">Your Name *</label>
                         <input type="text" id="studentName" name="studentName" required>
@@ -219,128 +235,72 @@
                 <div class="footer-section">
                     <h4>Connect</h4>
                     <div class="social-links">
-                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024 EduBlog. All rights reserved. Built with passion for education.</p>
+                <p>&copy; 2025 EduBlog. All rights reserved. Built with passion for education.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Password Modal -->
-    <div id="password-modal" class="modal">
+    <!-- Admin Login Modal -->
+    <div id="login-modal" class="modal" role="dialog" aria-labelledby="login-title" aria-hidden="true">
         <div class="modal-content">
             <div class="modal-header">
                 <i class="fas fa-shield-alt modal-icon"></i>
-                <h2>Protected Content Area</h2>
-                <p>This section is password-protected. Please authenticate to access the content creation dashboard.</p>
+                <h2 id="login-title">Admin Login</h2>
+                <p>Please authenticate to access the content management dashboard.</p>
+                <button type="button" class="close-btn" id="close-login-modal" aria-label="Close">&times;</button>
             </div>
-            <form id="password-form" class="password-form">
+            <form id="login-form" class="login-form">
                 <div class="form-group">
-                    <label for="password">Enter Password:</label>
-                    <input type="password" id="password" name="password" required>
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required autocomplete="username">
                 </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+                <div id="login-error" class="error-message hidden"></div>
                 <div class="modal-actions">
-                    <button type="button" id="cancel-btn" class="btn btn-outline">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Authenticate</button>
+                    <button type="button" id="cancel-login-btn" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Login</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Create Post Modal -->
-    <div id="create-post-modal" class="modal">
+    <!-- Post Detail Modal -->
+    <div id="post-detail-modal" class="modal" role="dialog" aria-labelledby="post-detail-title" aria-hidden="true">
         <div class="modal-content large">
             <div class="modal-header">
-                <h2>Create New Post</h2>
-                <button type="button" id="close-create-modal" class="close-btn">&times;</button>
+                <button type="button" class="close-btn" id="close-post-detail" aria-label="Close">&times;</button>
             </div>
-            <form id="create-post-form" class="create-post-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="post-title">Title *</label>
-                        <input type="text" id="post-title" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-type">Content Type *</label>
-                        <select id="post-type" name="contentType" required>
-                            <option value="">Select type...</option>
-                            <option value="blog">Blog</option>
-                            <option value="story">Story</option>
-                            <option value="news">News</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="post-excerpt">Excerpt *</label>
-                    <textarea id="post-excerpt" name="excerpt" rows="3" required placeholder="Brief description of your content..."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="post-content">Content *</label>
-                    <textarea id="post-content" name="content" rows="15" required placeholder="Write your content here... You can use markdown formatting."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="post-tags">Tags (comma-separated)</label>
-                    <input type="text" id="post-tags" name="tags" placeholder="e.g., education, study tips, motivation">
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" id="save-draft-btn" class="btn btn-outline">Save as Draft</button>
-                    <button type="submit" class="btn btn-primary">Publish Post</button>
-                </div>
-            </form>
+            <article class="post-content" id="post-detail-content">
+                <!-- Post content will be loaded here -->
+            </article>
         </div>
     </div>
 
     <!-- Success Toast -->
-    <div id="success-toast" class="toast">
-        <i class="fas fa-check-circle"></i>
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <i id="toast-icon" class="fas fa-check-circle"></i>
         <span id="toast-message">Success!</span>
+        <button class="toast-close" aria-label="Close">&times;</button>
     </div>
 
+    <!-- Back to Top Button -->
+    <button id="scrollToTop" class="scroll-to-top" aria-label="Scroll to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
+    <!-- Script files -->
+    <script src="api.js"></script>
     <script src="script.js"></script>
-    
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the create post modal
-        const createPostModal = document.getElementById('create-post-modal');
-        const closeCreateModal = document.getElementById('close-create-modal');
-        
-        if (closeCreateModal) {
-            closeCreateModal.addEventListener('click', function() {
-                createPostModal.classList.remove('active');
-                document.getElementById('create-post-form').reset();
-            });
-        }
-        
-        // Handle create post form submission
-        const createPostForm = document.getElementById('create-post-form');
-        if (createPostForm) {
-            createPostForm.addEventListener('submit', function(e) {
-                handleCreatePost(e, true);
-            });
-        }
-        
-        // Handle save draft button
-        const saveDraftBtn = document.getElementById('save-draft-btn');
-        if (saveDraftBtn) {
-            saveDraftBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                handleCreatePost(e, false);
-            });
-        }
-    });
-</script>
-    
 </body>
 </html>
