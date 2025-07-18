@@ -31,7 +31,7 @@ function setupEventListeners() {
             e.preventDefault();
             const password = document.getElementById('dashboard-password').value;
             // UPDATED PASSWORD HERE:
-            if (password === 'admin123') {
+            if (password === 'admin 123') {
                 isAuthenticated = true;
                 localStorage.setItem('isAuthenticated', 'true');
                 checkAuth();
@@ -372,7 +372,7 @@ async function saveToGist() {
         const response = await fetch('https://api.github.com/gists/6e5ce45bf729f33d108030b9e1fb6c74.js', {
             method: 'PATCH',
             headers: {
-                'Authorization': `token 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',
+                'Authorization': 'token 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',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(gistData)
