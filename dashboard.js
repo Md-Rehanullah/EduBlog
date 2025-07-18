@@ -5,6 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Dashboard script loaded");
+    
     // Check authentication on page load
     checkAuthentication();
     
@@ -167,10 +168,22 @@ function handleLogout() {
 }
 
 // Load all dashboard data
-function loadDashboardData() {
+async function loadDashboardData() {
     console.log("Loading dashboard data");
-    loadStats();
-    loadPosts();
+    
+    // First make sure we have the latest data from the cloud
+    try {
+        await API.posts.initializeWithSampleData();
+        loadStats();
+        loadPosts();
+    } catch (error) {
+        console.error("Error loading dashboard data:", error);
+        showToast("Failed to sync with cloud storage", "error");
+        
+        // Still try to load local data
+        loadStats();
+        loadPosts();
+    }
 }
 
 // Load and display post statistics
@@ -344,7 +357,7 @@ function resetPostForm() {
 }
 
 // Handle post form submission
-function handlePostSubmit() {
+async function handlePostSubmit() {
     console.log("Post form submitted");
     try {
         const form = document.getElementById('create-post-form');
@@ -361,17 +374,20 @@ function handlePostSubmit() {
             isPublished: formData.get('published') === 'on'
         };
         
+        // Show loading state
+        showToast('Saving post...', 'info');
+        
         // Check if we're creating or updating
         const postId = formData.get('id');
         
         let result;
         if (postId) {
             // Update existing post
-            result = API.posts.updatePost(postId, postData);
+            result = await API.posts.updatePost(postId, postData);
             showToast(`Post "${result.title}" updated successfully`);
         } else {
             // Create new post
-            result = API.posts.createPost(postData);
+            result = await API.posts.createPost(postData);
             showToast(`Post "${result.title}" created successfully`);
         }
         
@@ -415,7 +431,7 @@ function closeConfirmationModal() {
 }
 
 // Execute the confirmed delete action
-function executeConfirmedAction() {
+async function executeConfirmedAction() {
     try {
         // Get post ID from button data attribute
         const postId = document.getElementById('confirm-action').getAttribute('data-post-id');
@@ -424,8 +440,11 @@ function executeConfirmedAction() {
             throw new Error('Post ID not found');
         }
         
+        // Show loading state
+        showToast('Deleting post...', 'info');
+        
         // Delete the post
-        const deletedPost = API.posts.deletePost(postId);
+        const deletedPost = await API.posts.deletePost(postId);
         
         // Show success message and close modal
         showToast(`Post "${deletedPost.title}" deleted successfully`);
@@ -472,6 +491,8 @@ function showToast(message, type = 'success') {
         toastIcon.className = 'fas fa-exclamation-circle';
     } else if (type === 'warning') {
         toastIcon.className = 'fas fa-exclamation-triangle';
+    } else if (type === 'info') {
+        toastIcon.className = 'fas fa-info-circle';
     } else {
         toastIcon.className = 'fas fa-check-circle';
     }
