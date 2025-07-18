@@ -30,6 +30,7 @@ function setupEventListeners() {
         passwordForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const password = document.getElementById('dashboard-password').value;
+            // UPDATED PASSWORD HERE:
             if (password === 'admin123') {
                 isAuthenticated = true;
                 localStorage.setItem('isAuthenticated', 'true');
@@ -65,6 +66,8 @@ function setupEventListeners() {
     document.getElementById('cancel-action').addEventListener('click', closeModal);
     document.getElementById('confirm-action').addEventListener('click', executeAction);
 }
+
+// ... rest of your file remains unchanged ...
 
 // Load posts from storage
 function loadPosts() {
