@@ -14,7 +14,7 @@
         <nav class="nav">
             <div class="nav-container">
                 <div class="nav-brand">
-                    <a href="index.html"><h1>EduBlog</h1></a>
+                    <h1>EduBlog</h1>
                 </div>
                 
                 <div class="nav-menu" id="nav-menu">
@@ -28,9 +28,9 @@
                     <a href="dashboard.html" class="nav-link">Dashboard</a>                    
                 </div>
                 
-                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+               <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
                     <i class="fas fa-bars"></i>
-                </button>
+               </button>
             </div>
         </nav>
     </header>
@@ -157,6 +157,7 @@
                 </div>
 
                 <form class="contact-form" id="contact-form">
+                    <input type="hidden" name="csrf_token" id="csrf-token" value="">
                     <div class="form-group">
                         <label for="studentName">Your Name *</label>
                         <input type="text" id="studentName" name="studentName" required>
@@ -237,24 +238,40 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2025 EduBlog. All rights reserved. Built with passion for education.</p>
+                <p>&copy; 2024 EduBlog. All rights reserved. Built with passion for education.</p>
             </div>
         </div>
     </footer>
 
-    <!-- Post Modal -->
-    <div id="post-modal" class="modal">
+    <!-- Post Detail Modal -->
+    <div id="post-detail-modal" class="modal" role="dialog" aria-labelledby="post-detail-title" aria-hidden="true">
         <div class="modal-content large">
             <div class="modal-header">
-                <button class="close-btn" onclick="closePostModal()">&times;</button>
+                <h2 id="post-detail-title">Post Details</h2>
+                <button type="button" class="close-btn" id="close-post-detail" aria-label="Close">&times;</button>
             </div>
-            <article id="modal-post-content" class="post-content">
-                <!-- Post content will be loaded here -->
-            </article>
+            <div class="modal-body">
+                <article id="post-detail-content" class="post-content">
+                    <!-- Post content will be loaded here -->
+                </article>
+            </div>
         </div>
     </div>
 
-    <!-- IMPORTANT: Load API.js first, then script.js -->
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <i id="toast-icon" class="fas fa-check-circle"></i>
+        <span id="toast-message">Success!</span>
+        <button class="toast-close" aria-label="Close">&times;</button>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button id="scrollToTop" class="scroll-top-btn" aria-label="Scroll to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="cloud-storage.js"></script>
     <script src="api.js"></script>
     <script src="script.js"></script>
 </body>
