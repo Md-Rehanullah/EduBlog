@@ -1,75 +1,94 @@
 /**
- * EduBlog Main Script
- * Handles the functionality of the main website pages
+ * EduBlog Main Script - Fixed Version
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("EduBlog index page loaded");
+    console.log("EduBlog main script initialized");
     
     // Check if API is available
     if (typeof API === 'undefined') {
-        console.error("API module not found! Make sure api.js is loaded before script.js");
-        displayErrorMessage();
+        console.error("API module not found. Make sure api.js is loaded before script.js");
+        showErrorMessage("Failed to load core components. Please refresh the page or check your connection.");
         return;
     }
     
-    // Initialize the API with sample data if needed - now with cloud sync
-    initializeData();
+    // Check if CloudStorage is available
+    if (typeof CloudStorage === 'undefined') {
+        console.error("CloudStorage module not found. Make sure cloud-storage.js is loaded before api.js");
+        showErrorMessage("Failed to load cloud storage component. Posts may not persist across sessions.");
+    }
     
-    // Setup navigation and UI event listeners
-    setupNavigation();
+    // Initialize with data from cloud
+    initializeWithCloudData();
 });
 
-// Initialize data with cloud sync
-async function initializeData() {
-    try {
-        // Show loading indicator
-        showLoadingIndicator(true);
-        
-        // Initialize and sync data with cloud
-        await API.posts.initializeWithSampleData();
-        
-        // Load posts into content sections
-        loadAndDisplayPosts();
-        
-        // Check for post in URL parameters
-        checkForPostInUrl();
-    } catch (error) {
-        console.error("Error initializing data:", error);
-        showErrorMessage("Failed to load content. Please try again later.");
-    } finally {
-        // Hide loading indicator
-        showLoadingIndicator(false);
-    }
-}
-
-// Display error message if API isn't loaded
-function displayErrorMessage() {
-    const contentSections = document.querySelectorAll('.content-grid');
-    contentSections.forEach(section => {
-        section.innerHTML = '<div class="error-message">Failed to load content. Please refresh the page.</div>';
+// Show error message in content grids
+function showErrorMessage(message) {
+    document.querySelectorAll('.content-grid').forEach(grid => {
+        if (grid) {
+            grid.innerHTML = `<div class="error-message">${message}</div>`;
+        }
     });
-}
-
-// Show/hide loading indicator
-function showLoadingIndicator(show) {
+    
     const loadingElement = document.getElementById('content-loading');
     if (loadingElement) {
-        loadingElement.style.display = show ? 'block' : 'none';
+        loadingElement.style.display = 'none';
     }
 }
 
-// Show error message
-function showErrorMessage(message) {
-    const contentSections = document.querySelectorAll('.content-grid');
-    contentSections.forEach(section => {
-        section.innerHTML = `<div class="error-message">${message}</div>`;
-    });
+async function initializeWithCloudData() {
+    try {
+        // Show loading state if element exists
+        const loadingElement = document.getElementById('content-loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+        
+        // Initialize app with data
+        await API.posts.initializeWithSampleData();
+        
+        // Set up app after data is loaded
+        initApp();
+        setupEventListeners();
+        updateAuthUI();
+        
+        // Load posts
+        loadPosts();
+        
+        // Check for post in URL
+        checkForPostParam();
+    } catch (error) {
+        console.error("Error initializing app with cloud data:", error);
+        
+        // Still try to show whatever we can
+        initApp();
+        setupEventListeners();
+        updateAuthUI();
+        loadPosts();
+    } finally {
+        // Hide loading indicator
+        const loadingElement = document.getElementById('content-loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+    }
 }
 
-// Set up navigation and UI event listeners
-function setupNavigation() {
-    // Mobile menu toggle
+// Initialize the application
+function initApp() {
+    // Set CSRF tokens for forms if they exist
+    const csrfToken = API.generateCsrfToken();
+    document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
+        input.value = csrfToken;
+    });
+    
+    // Initialize the back to top button if it exists
+    initBackToTopButton();
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Navigation toggle for mobile
     const navToggle = document.getElementById('nav-toggle');
     const navMenu = document.getElementById('nav-menu');
     
@@ -82,36 +101,28 @@ function setupNavigation() {
     // Contact form submission
     const contactForm = document.getElementById('contact-form');
     if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            try {
-                const formData = new FormData(contactForm);
-                const messageData = {
-                    studentName: formData.get('studentName'),
-                    studentEmail: formData.get('studentEmail'),
-                    subject: formData.get('subject'),
-                    relatedContent: formData.get('relatedContent') || '',
-                    message: formData.get('message'),
-                    newsletter: formData.get('newsletter') === 'on'
-                };
-                
-                // Save message
-                API.contact.saveMessage(messageData);
-                
-                // Reset form
-                contactForm.reset();
-                
-                // Show confirmation
-                alert('Thank you! Your message has been sent.');
-            } catch (error) {
-                console.error('Error sending message:', error);
-                alert('There was an error sending your message. Please try again.');
+        contactForm.addEventListener('submit', handleContactSubmit);
+    }
+    
+    // Close buttons for modals
+    document.querySelectorAll('.close-btn, .modal').forEach(element => {
+        element.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAllModals();
             }
+        });
+    });
+    
+    // Close toast notification
+    const toastClose = document.querySelector('.toast-close');
+    if (toastClose) {
+        toastClose.addEventListener('click', () => {
+            const toast = document.getElementById('toast');
+            if (toast) toast.classList.remove('show');
         });
     }
     
-    // Smooth scroll for anchor links
+    // Smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]:not([href="#"])').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
@@ -121,43 +132,51 @@ function setupNavigation() {
                     behavior: 'smooth',
                     block: 'start'
                 });
+                
+                history.pushState(null, '', this.getAttribute('href'));
             }
         });
     });
 }
 
-// Load and display posts
-function loadAndDisplayPosts() {
+// Load posts for different sections
+function loadPosts() {
     console.log("Loading posts for display");
     
-    // Get all posts from the API
     try {
-        const allPosts = API.posts.getAllPosts();
-        console.log(`Found ${allPosts.length} total posts`);
+        // Get all published posts from each category
+        const blogsData = API.posts.getPosts({
+            contentType: 'blog',
+            isPublished: true,
+            limit: 6
+        });
         
-        // Filter published posts
-        const publishedPosts = allPosts.filter(post => post.isPublished === true);
-        console.log(`${publishedPosts.length} published posts`);
+        const storiesData = API.posts.getPosts({
+            contentType: 'story',
+            isPublished: true,
+            limit: 6
+        });
         
-        // Render blogs
+        const newsData = API.posts.getPosts({
+            contentType: 'news',
+            isPublished: true,
+            limit: 6
+        });
+        
+        // Render each section if their container exists
         const blogsGrid = document.getElementById('blogs-grid');
         if (blogsGrid) {
-            const blogs = publishedPosts.filter(post => post.contentType === 'blog');
-            renderPostsToSection(blogsGrid, blogs);
+            renderPostsSection('blogs-grid', blogsData.posts, blogsData.pagination);
         }
         
-        // Render stories
         const storiesGrid = document.getElementById('stories-grid');
         if (storiesGrid) {
-            const stories = publishedPosts.filter(post => post.contentType === 'story');
-            renderPostsToSection(storiesGrid, stories);
+            renderPostsSection('stories-grid', storiesData.posts, storiesData.pagination);
         }
         
-        // Render news
         const newsGrid = document.getElementById('news-grid');
         if (newsGrid) {
-            const news = publishedPosts.filter(post => post.contentType === 'news');
-            renderPostsToSection(newsGrid, news);
+            renderPostsSection('news-grid', newsData.posts, newsData.pagination);
         }
     } catch (error) {
         console.error('Error loading posts:', error);
@@ -165,162 +184,441 @@ function loadAndDisplayPosts() {
     }
 }
 
-// Render posts to a specific section
-function renderPostsToSection(sectionElement, posts) {
+// Render posts in a specific section
+function renderPostsSection(sectionId, posts, pagination) {
+    const sectionElement = document.getElementById(sectionId);
+    if (!sectionElement) return;
+    
     // Clear existing content
     sectionElement.innerHTML = '';
     
-    if (posts.length === 0) {
-        sectionElement.innerHTML = '<div class="no-content">No content available yet.</div>';
+    // Handle empty state
+    if (!posts || posts.length === 0) {
+        sectionElement.innerHTML = '<div class="empty-state">No content available yet.</div>';
         return;
     }
     
-    // Render each post
+    // Create post cards
     posts.forEach(post => {
-        const postCard = createPostCard(post);
-        sectionElement.appendChild(postCard);
+        const card = createPostCard(post);
+        sectionElement.appendChild(card);
     });
+    
+    // Render pagination if container exists
+    const paginationElement = document.getElementById(sectionId.replace('grid', 'pagination'));
+    if (paginationElement && pagination && pagination.totalPages > 1) {
+        renderPagination(paginationElement, pagination, (page) => {
+            const options = {
+                contentType: sectionId.includes('blog') ? 'blog' : 
+                             sectionId.includes('stories') ? 'story' : 'news',
+                isPublished: true,
+                page: page,
+                limit: 6
+            };
+            
+            const data = API.posts.getPosts(options);
+            renderPostsSection(sectionId, data.posts, data.pagination);
+        });
+    }
 }
 
 // Create a post card element
 function createPostCard(post) {
-    const card = document.createElement('div');
+    const card = document.createElement('article');
     card.className = `content-card ${post.contentType}`;
     card.setAttribute('data-id', post.id);
     
-    // Format date
-    const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
+    // Format date safely
+    let publishedDate = 'Unknown date';
+    try {
+        publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } catch (e) {
+        console.error('Error formatting date for post', post.id);
+    }
     
-    // Get content type label
     const contentTypeLabel = post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1);
     
-    // Create HTML for the card
     card.innerHTML = `
         <div class="content-header">
             <div class="content-meta">
                 <span class="content-badge">${contentTypeLabel}</span>
-                <span class="content-date"><i class="fas fa-calendar"></i> ${publishedDate}</span>
+                <span><i class="fas fa-calendar" aria-hidden="true"></i> ${publishedDate}</span>
             </div>
             <h3 class="content-title">${post.title}</h3>
             <p class="content-excerpt">${post.excerpt}</p>
         </div>
         <div class="content-body">
             ${post.tags && post.tags.length > 0 ? `
-                <div class="content-tags">
+                <div class="content-tags" aria-label="Tags">
                     ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                 </div>
             ` : ''}
-            <button class="read-more">Read More <i class="fas fa-arrow-right"></i></button>
+            <button class="read-more btn btn-text" data-id="${post.id}">
+                Read More <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </button>
         </div>
     `;
     
-    // Add click event to show full content
+    // Add click event to open post
     card.querySelector('.read-more').addEventListener('click', function() {
-        displayFullPost(post);
+        openPostDetail(post.id);
     });
     
     return card;
 }
 
-// Display full post in modal
-function displayFullPost(post) {
-    console.log("Displaying full post:", post.id, post.title);
+// Render pagination controls
+function renderPagination(element, pagination, onPageChange) {
+    element.innerHTML = '';
     
-    // Create modal if it doesn't exist
-    let modal = document.getElementById('post-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'post-modal';
-        modal.className = 'modal';
-        document.body.appendChild(modal);
+    if (!pagination || pagination.totalPages <= 1) return;
+    
+    const ul = document.createElement('ul');
+    ul.className = 'pagination-list';
+    
+    // Previous button
+    const prevLi = document.createElement('li');
+    const prevButton = document.createElement('button');
+    prevButton.innerHTML = '<i class="fas fa-chevron-left" aria-hidden="true"></i> Prev';
+    prevButton.className = 'pagination-link';
+    prevButton.disabled = pagination.page <= 1;
+    prevButton.setAttribute('aria-label', 'Previous page');
+    prevButton.addEventListener('click', () => onPageChange(pagination.page - 1));
+    prevLi.appendChild(prevButton);
+    ul.appendChild(prevLi);
+    
+    // Page numbers
+    const maxPages = Math.min(5, pagination.totalPages);
+    let startPage = Math.max(1, pagination.page - 2);
+    let endPage = Math.min(pagination.totalPages, startPage + maxPages - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxPages - 1) {
+        startPage = Math.max(1, endPage - maxPages + 1);
     }
     
-    // Format date
-    const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+    for (let i = startPage; i <= endPage; i++) {
+        const li = document.createElement('li');
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.className = 'pagination-link' + (i === pagination.page ? ' active' : '');
+        button.setAttribute('aria-label', `Page ${i}`);
+        button.setAttribute('aria-current', i === pagination.page ? 'page' : 'false');
+        button.addEventListener('click', () => onPageChange(i));
+        li.appendChild(button);
+        ul.appendChild(li);
+    }
     
-    // Create modal content
-    modal.innerHTML = `
-        <div class="modal-content large">
-            <div class="modal-header">
-                <button class="close-btn" onclick="closePostModal()">&times;</button>
-            </div>
-            <article class="post-content">
-                <header>
-                    <span class="content-badge">${post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1)}</span>
-                    <h1>${post.title}</h1>
-                    <div class="post-meta">
-                        <span><i class="fas fa-calendar"></i> ${publishedDate}</span>
-                    </div>
-                </header>
-                <div class="post-body">
-                    ${formatPostContent(post.content)}
-                </div>
-                ${post.tags && post.tags.length > 0 ? `
-                    <div class="post-tags">
-                        <strong>Tags:</strong> ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join(' ')}
-                    </div>
-                ` : ''}
-            </article>
-        </div>
-    `;
+    // Next button
+    const nextLi = document.createElement('li');
+    const nextButton = document.createElement('button');
+    nextButton.innerHTML = 'Next <i class="fas fa-chevron-right" aria-hidden="true"></i>';
+    nextButton.className = 'pagination-link';
+    nextButton.disabled = pagination.page >= pagination.totalPages;
+    nextButton.setAttribute('aria-label', 'Next page');
+    nextButton.addEventListener('click', () => onPageChange(pagination.page + 1));
+    nextLi.appendChild(nextButton);
+    ul.appendChild(nextLi);
     
-    // Show the modal
-    modal.style.display = 'block';
-    
-    // Add click event to close on background click
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            closePostModal();
-        }
-    });
-    
-    // Make modal visible with animation
-    setTimeout(() => {
-        modal.classList.add('active');
-    }, 10);
+    element.appendChild(ul);
 }
 
-// Format post content - simple markdown to HTML
-function formatPostContent(content) {
-    if (!content) return '';
-    
-    let html = content;
-    
-    // Headers
-    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    
-    // Bold and italic
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // Lists
-    html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
-    html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
-    
-    // Wrap paragraphs
-    const paragraphs = html.split('\n\n');
-    html = paragraphs.map(p => {
-        if (p.trim().startsWith('<h') || p.trim().startsWith('<li>')) {
-            return p;
+// Open post detail in modal
+function openPostDetail(postId) {
+    try {
+        const post = API.posts.getPostById(postId);
+        if (!post) {
+            showToast('Post not found', 'error');
+            return;
         }
-        return `<p>${p}</p>`;
-    }).join('\n');
+        
+        const modal = document.getElementById('post-detail-modal');
+        const contentElement = document.getElementById('post-detail-content');
+        
+        if (!modal || !contentElement) {
+            console.error('Modal elements not found in the DOM');
+            return;
+        }
+        
+        // Format date
+        let publishedDate = 'Unknown date';
+        try {
+            publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (e) {
+            console.error('Error formatting date');
+        }
+        
+        // Convert content markdown to HTML
+        const contentHtml = markdownToHtml(post.content);
+        
+        // Update modal title
+        const titleElement = document.getElementById('post-detail-title');
+        if (titleElement) {
+            titleElement.textContent = post.title;
+        }
+        
+        // Set modal content
+        contentElement.innerHTML = `
+            <header class="post-header">
+                <span class="content-badge">${post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1)}</span>
+                <h1>${post.title}</h1>
+                <div class="post-meta">
+                    <span><i class="fas fa-calendar" aria-hidden="true"></i> ${publishedDate}</span>
+                    ${post.tags && post.tags.length > 0 ? `
+                        <div class="content-tags" aria-label="Tags">
+                            ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            </header>
+            <div class="post-body">
+                ${contentHtml}
+            </div>
+        `;
+        
+        // Show modal
+        modal.classList.add('active');
+        
+        // Set up close button
+        const closeButton = document.getElementById('close-post-detail');
+        if (closeButton) {
+            // Remove existing event listeners to prevent duplicates
+            const newCloseButton = closeButton.cloneNode(true);
+            closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+            
+            newCloseButton.addEventListener('click', () => {
+                modal.classList.remove('active');
+            });
+            
+            // Focus on close button for accessibility
+            newCloseButton.focus();
+        }
+        
+        // Close when clicking outside content
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    } catch (error) {
+        console.error('Error opening post detail:', error);
+        showToast('Failed to load post. Please try again.', 'error');
+    }
+}
+
+// Convert markdown to HTML
+function markdownToHtml(markdown) {
+    if (!markdown) return '';
+    
+    let html = markdown;
+    
+    try {
+        // Headers
+        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+        
+        // Bold and italic
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        // Lists
+        html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+        html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
+        html = html.replace(/^(\d+)\. (.*$)/gim, '<li>$2</li>');
+        
+        // Wrap lists
+        let inList = false;
+        let listType = '';
+        let listItems = [];
+        
+        // Process line by line for lists
+        const lines = html.split('\n');
+        const processedLines = [];
+        
+        for (const line of lines) {
+            if (line.match(/<li>/)) {
+                // Determine list type if starting a new list
+                if (!inList) {
+                    inList = true;
+                    // Check if it's an ordered list
+                    if (line.match(/^\d+\./)) {
+                        listType = 'ol';
+                    } else {
+                        listType = 'ul';
+                    }
+                }
+                listItems.push(line);
+            } else {
+                // End list if we were in one
+                if (inList) {
+                    processedLines.push(`<${listType}>${listItems.join('')}</${listType}>`);
+                    listItems = [];
+                    inList = false;
+                }
+                processedLines.push(line);
+            }
+        }
+        
+        // Handle case where document ends with a list
+        if (inList) {
+            processedLines.push(`<${listType}>${listItems.join('')}</${listType}>`);
+        }
+        
+        html = processedLines.join('\n');
+        
+        // Links
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+        
+        // Blockquotes
+        html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+        
+        // Line breaks and paragraphs
+        html = html.replace(/\n\n/g, '</p><p>');
+        
+        // Clean up empty paragraphs
+        html = html.replace(/<p><\/p>/g, '');
+        
+        // Wrap in paragraphs if not already wrapped
+        if (!html.match(/^<([a-z][a-z0-9]*)[^>]*>/i)) {
+            html = '<p>' + html + '</p>';
+        }
+    } catch (error) {
+        console.error('Error parsing markdown:', error);
+        return '<p>Error displaying content. Please try again later.</p>';
+    }
     
     return html;
 }
 
-// Check for post ID in URL parameters
-function checkForPostInUrl() {
+// Handle contact form submission
+async function handleContactSubmit(e) {
+    e.preventDefault();
+    
+    // Check CSRF token if available
+    const tokenInput = document.getElementById('csrf-token');
+    if (tokenInput) {
+        const token = tokenInput.value;
+        if (!API.verifyCsrfToken(token)) {
+            showToast('Form validation failed. Please refresh the page and try again.', 'error');
+            return;
+        }
+    }
+    
+    const form = document.getElementById('contact-form');
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    
+    // Prepare message data
+    const messageData = {
+        studentName: formData.get('studentName'),
+        studentEmail: formData.get('studentEmail'),
+        subject: formData.get('subject'),
+        relatedContent: formData.get('relatedContent'),
+        message: formData.get('message'),
+        newsletter: formData.get('newsletter') === 'on'
+    };
+    
+    try {
+        // Save message locally
+        API.contact.saveMessage(messageData);
+        
+        // Try to send email notification
+        await API.contact.sendMessageEmail(messageData);
+        
+        // Reset form and show success message
+        form.reset();
+        showToast('Message sent successfully! We\'ll get back to you within 24 hours.');
+    } catch (error) {
+        console.error('Error sending message:', error);
+        showToast('There was a problem sending your message. Please try again later.', 'error');
+    }
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
+    
+    if (!toast || !toastMessage || !toastIcon) {
+        console.error('Toast elements not found');
+        alert(message); // Fallback to alert if toast elements aren't available
+        return;
+    }
+    
+    toastMessage.textContent = message;
+    toast.className = `toast show ${type}`;
+    
+    // Update icon based on type
+    if (type === 'error') {
+        toastIcon.className = 'fas fa-exclamation-circle';
+    } else if (type === 'warning') {
+        toastIcon.className = 'fas fa-exclamation-triangle';
+    } else if (type === 'info') {
+        toastIcon.className = 'fas fa-info-circle';
+    } else {
+        toastIcon.className = 'fas fa-check-circle';
+    }
+    
+    // Auto hide after 4 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+}
+
+// Update UI based on authentication status
+function updateAuthUI() {
+    const isAuthenticated = API.auth.isAuthenticated();
+    const dashboardLink = document.getElementById('dashboard-link');
+    
+    if (dashboardLink) {
+        dashboardLink.classList.toggle('hidden', !isAuthenticated);
+    }
+}
+
+// Close all open modals
+function closeAllModals() {
+    document.querySelectorAll('.modal.active').forEach(modal => {
+        modal.classList.remove('active');
+    });
+}
+
+// Initialize back to top button
+function initBackToTopButton() {
+    const scrollToTopButton = document.getElementById('scrollToTop');
+    
+    if (!scrollToTopButton) return;
+    
+    // Show/hide button based on scroll position
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            scrollToTopButton.classList.add('visible');
+        } else {
+            scrollToTopButton.classList.remove('visible');
+        }
+    });
+    
+    // Scroll to top when clicked
+    scrollToTopButton.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+}
+
+// Function to check for post query parameter in URL
+function checkForPostParam() {
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('post');
     
@@ -328,24 +626,10 @@ function checkForPostInUrl() {
         try {
             const post = API.posts.getPostById(parseInt(postId));
             if (post) {
-                displayFullPost(post);
+                openPostDetail(post.id);
             }
         } catch (error) {
-            console.error("Error loading post from URL:", error);
+            console.error('Error loading post from URL:', error);
         }
     }
 }
-
-// Close post modal
-function closePostModal() {
-    const modal = document.getElementById('post-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
-    }
-}
-
-// Make close function available globally
-window.closePostModal = closePostModal;
