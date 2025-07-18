@@ -1,6 +1,5 @@
 /**
- * EduBlog API Module
- * Handles all data operations and API communications
+ * EduBlog API Module with Cloud Storage
  */
 
 const API = (function() {
@@ -10,6 +9,13 @@ const API = (function() {
         SESSION: 'edublog-session',
         MESSAGES: 'edublog-messages',
         CSRF: 'edublog-csrf-token'
+    };
+    
+    // JSONbin.io API configuration
+    const CLOUD_CONFIG = {
+        BIN_ID: '65da41af1f5677401f37de49', // Create a free bin at JSONbin.io and replace this
+        API_KEY: '$2a$10$JFeUkXP.H0YDwX6MgRTqRu8Yln8jR90zswKN3iHsEMpf1X9H/1yPi', // Your JSONbin master key
+        BASE_URL: 'https://api.jsonbin.io/v3/b'
     };
     
     // Generate CSRF token for forms
@@ -25,6 +31,57 @@ const API = (function() {
     function verifyCsrfToken(token) {
         return token === sessionStorage.getItem(STORAGE_KEYS.CSRF);
     }
+    
+    /**
+     * Cloud Storage methods
+     */
+    const cloudStorage = {
+        // Save data to cloud
+        saveToCloud: async function(data) {
+            try {
+                const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${CLOUD_CONFIG.BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': CLOUD_CONFIG.API_KEY
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to save data to cloud');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Cloud storage error:', error);
+                // Fall back to local storage
+                return null;
+            }
+        },
+        
+        // Load data from cloud
+        loadFromCloud: async function() {
+            try {
+                const response = await fetch(`${CLOUD_CONFIG.BASE_URL}/${CLOUD_CONFIG.BIN_ID}`, {
+                    headers: {
+                        'X-Master-Key': CLOUD_CONFIG.API_KEY
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load data from cloud');
+                }
+                
+                const result = await response.json();
+                return result.record;
+            } catch (error) {
+                console.error('Cloud storage error:', error);
+                // Fall back to local storage
+                return null;
+            }
+        }
+    };
     
     /**
      * Authentication methods
@@ -100,46 +157,79 @@ const API = (function() {
      */
     const posts = {
         // Initialize with sample data if storage is empty
-        initializeWithSampleData: function() {
-            // Only initialize if no posts exist
-            if (posts.getAllPosts().length === 0) {
-                const samplePosts = [
-                    {
-                        id: 1,
-                        title: 'Effective Study Techniques for Remote Learning',
-                        contentType: 'blog',
-                        excerpt: 'Discover science-backed study methods that can boost your productivity while learning from home.',
-                        content: `# Effective Study Techniques for Remote Learning\n\n**Remote learning** has become a significant part of education worldwide. To make the most of it, consider these proven techniques:\n\n## 1. Create a Dedicated Study Space\n\nYour environment affects your focus. Set up a space that's:\n- Free from distractions\n- Comfortable but not too comfortable\n- Well-lit and well-ventilated\n\n## 2. Use the Pomodoro Technique\n\nWork in focused 25-minute intervals followed by 5-minute breaks. After four cycles, take a longer break of 15-30 minutes.\n\n## 3. Active Recall Practice\n\nDon't just read - test yourself! Close your notes and try to recall the information. This strengthens neural pathways and improves retention.`,
-                        tags: ['study techniques', 'remote learning', 'productivity'],
-                        publishedAt: '2024-07-01',
-                        isPublished: true,
-                        createdAt: '2024-07-01T10:00:00Z'
-                    },
-                    {
-                        id: 2,
-                        title: 'From Failing Grades to University Honors',
-                        contentType: 'story',
-                        excerpt: 'How I transformed my academic performance through persistence and finding the right learning methods.',
-                        content: `# From Failing Grades to University Honors\n\n## The Early Struggles\n\nIn my freshman year, I was barely passing my classes. The transition from high school to university hit me hard. My study habits weren't working, and I felt overwhelmed by the workload.\n\n## The Turning Point\n\nAfter failing two midterms, I knew something had to change. I reached out to my university's academic support center and discovered I had an undiagnosed learning disability. With this new understanding, I could finally develop strategies that worked for me.\n\n## The Transformation\n\nI began recording lectures, using text-to-speech software, and working with a study group. These accommodations made all the difference. By my junior year, I was making the Dean's List consistently.\n\n## The Lesson\n\nSometimes what looks like failure is just a mismatch between your learning style and traditional methods. Don't be afraid to seek help and try different approaches until you find what works for you.`,
-                        tags: ['success story', 'perseverance', 'learning disabilities'],
-                        publishedAt: '2024-07-05',
-                        isPublished: true,
-                        createdAt: '2024-07-05T14:30:00Z'
-                    },
-                    {
-                        id: 3,
-                        title: 'New Scholarship Program Launches for STEM Students',
-                        contentType: 'news',
-                        excerpt: 'A major tech company has announced a $5 million scholarship fund targeting underrepresented groups in STEM fields.',
-                        content: `# New Scholarship Program Launches for STEM Students\n\n## Program Details\n\nTech giant InnovateCorp has announced a new $5 million scholarship program aimed at increasing diversity in STEM fields. The program will provide full tuition coverage and living stipends to 100 students from underrepresented backgrounds each year.\n\n## Eligibility Criteria\n\nTo qualify, students must:\n- Be pursuing degrees in Science, Technology, Engineering, or Mathematics\n- Demonstrate financial need\n- Maintain a GPA of 3.0 or higher\n- Be a member of an underrepresented group in STEM\n\n## Application Process\n\nApplications open next month and will be accepted until October 15th. Students must submit academic transcripts, two letters of recommendation, and a personal essay explaining their interest in STEM and career goals.\n\n## Industry Impact\n\nThis initiative is part of a broader industry movement to address the diversity gap in technology fields. Similar programs have shown promising results in increasing graduation rates and career placement for participants.`,
-                        tags: ['scholarships', 'STEM', 'education news'],
-                        publishedAt: '2024-07-10',
-                        isPublished: true,
-                        createdAt: '2024-07-10T09:15:00Z'
-                    }
-                ];
+        initializeWithSampleData: async function() {
+            try {
+                // First check cloud storage
+                const cloudData = await cloudStorage.loadFromCloud();
                 
-                localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(samplePosts));
+                if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
+                    // We have data in cloud storage, use that
+                    console.log('Loaded posts from cloud storage:', cloudData.length);
+                    localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(cloudData));
+                    return;
+                }
+                
+                // No cloud data, check local storage
+                const localPosts = this.getAllPosts();
+                if (localPosts.length === 0) {
+                    // No data in local storage either, use sample data
+                    const samplePosts = [
+                        {
+                            id: 1,
+                            title: 'Effective Study Techniques for Remote Learning',
+                            contentType: 'blog',
+                            excerpt: 'Discover science-backed study methods that can boost your productivity while learning from home.',
+                            content: `# Effective Study Techniques for Remote Learning\n\n**Remote learning** has become a significant part of education worldwide. To make the most of it, consider these proven techniques:\n\n## 1. Create a Dedicated Study Space\n\nYour environment affects your focus. Set up a space that's:\n- Free from distractions\n- Comfortable but not too comfortable\n- Well-lit and well-ventilated\n\n## 2. Use the Pomodoro Technique\n\nWork in focused 25-minute intervals followed by 5-minute breaks. After four cycles, take a longer break of 15-30 minutes.\n\n## 3. Active Recall Practice\n\nDon't just read - test yourself! Close your notes and try to recall the information. This strengthens neural pathways and improves retention.`,
+                            tags: ['study techniques', 'remote learning', 'productivity'],
+                            publishedAt: '2024-07-01',
+                            isPublished: true,
+                            createdAt: '2024-07-01T10:00:00Z'
+                        },
+                        {
+                            id: 2,
+                            title: 'From Failing Grades to University Honors',
+                            contentType: 'story',
+                            excerpt: 'How I transformed my academic performance through persistence and finding the right learning methods.',
+                            content: `# From Failing Grades to University Honors\n\n## The Early Struggles\n\nIn my freshman year, I was barely passing my classes. The transition from high school to university hit me hard. My study habits weren't working, and I felt overwhelmed by the workload.\n\n## The Turning Point\n\nAfter failing two midterms, I knew something had to change. I reached out to my university's academic support center and discovered I had an undiagnosed learning disability. With this new understanding, I could finally develop strategies that worked for me.\n\n## The Transformation\n\nI began recording lectures, using text-to-speech software, and working with a study group. These accommodations made all the difference. By my junior year, I was making the Dean's List consistently.\n\n## The Lesson\n\nSometimes what looks like failure is just a mismatch between your learning style and traditional methods. Don't be afraid to seek help and try different approaches until you find what works for you.`,
+                            tags: ['success story', 'perseverance', 'learning disabilities'],
+                            publishedAt: '2024-07-05',
+                            isPublished: true,
+                            createdAt: '2024-07-05T14:30:00Z'
+                        },
+                        {
+                            id: 3,
+                            title: 'New Scholarship Program Launches for STEM Students',
+                            contentType: 'news',
+                            excerpt: 'A major tech company has announced a $5 million scholarship fund targeting underrepresented groups in STEM fields.',
+                            content: `# New Scholarship Program Launches for STEM Students\n\n## Program Details\n\nTech giant InnovateCorp has announced a new $5 million scholarship program aimed at increasing diversity in STEM fields. The program will provide full tuition coverage and living stipends to 100 students from underrepresented backgrounds each year.\n\n## Eligibility Criteria\n\nTo qualify, students must:\n- Be pursuing degrees in Science, Technology, Engineering, or Mathematics\n- Demonstrate financial need\n- Maintain a GPA of 3.0 or higher\n- Be a member of an underrepresented group in STEM\n\n## Application Process\n\nApplications open next month and will be accepted until October 15th. Students must submit academic transcripts, two letters of recommendation, and a personal essay explaining their interest in STEM and career goals.\n\n## Industry Impact\n\nThis initiative is part of a broader industry movement to address the diversity gap in technology fields. Similar programs have shown promising results in increasing graduation rates and career placement for participants.`,
+                            tags: ['scholarships', 'STEM', 'education news'],
+                            publishedAt: '2024-07-10',
+                            isPublished: true,
+                            createdAt: '2024-07-10T09:15:00Z'
+                        }
+                    ];
+                    
+                    localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(samplePosts));
+                    
+                    // Save sample data to cloud storage for future use
+                    await cloudStorage.saveToCloud(samplePosts);
+                    console.log('Initialized with sample data and saved to cloud');
+                } else {
+                    // We had local data but not cloud data, save local to cloud
+                    await cloudStorage.saveToCloud(localPosts);
+                    console.log('Saved local posts to cloud storage');
+                }
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                // Fall back to sample data in localStorage only
+                const localPosts = this.getAllPosts();
+                if (localPosts.length === 0) {
+                    // Initialize with sample data in localStorage only
+                    const samplePosts = [
+                        // Your sample posts here
+                    ];
+                    localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(samplePosts));
+                }
             }
         },
         
@@ -222,7 +312,7 @@ const API = (function() {
         },
         
         // Create a new post
-        createPost: function(postData) {
+        createPost: async function(postData) {
             if (!auth.isAuthenticated()) {
                 throw new Error('Authentication required');
             }
@@ -262,11 +352,20 @@ const API = (function() {
             allPosts.unshift(newPost);
             localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(allPosts));
             
+            // Save to cloud
+            try {
+                await cloudStorage.saveToCloud(allPosts);
+                console.log('Post created and saved to cloud');
+            } catch (error) {
+                console.error('Failed to save post to cloud:', error);
+                // Continue anyway since we saved to localStorage
+            }
+            
             return newPost;
         },
         
         // Update an existing post
-        updatePost: function(id, postData) {
+        updatePost: async function(id, postData) {
             if (!auth.isAuthenticated()) {
                 throw new Error('Authentication required');
             }
@@ -307,11 +406,20 @@ const API = (function() {
             
             localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(allPosts));
             
+            // Save to cloud
+            try {
+                await cloudStorage.saveToCloud(allPosts);
+                console.log('Post updated and saved to cloud');
+            } catch (error) {
+                console.error('Failed to save updated post to cloud:', error);
+                // Continue anyway since we saved to localStorage
+            }
+            
             return allPosts[postIndex];
         },
         
         // Delete a post
-        deletePost: function(id) {
+        deletePost: async function(id) {
             if (!auth.isAuthenticated()) {
                 throw new Error('Authentication required');
             }
@@ -326,6 +434,15 @@ const API = (function() {
             // Remove post
             const deletedPost = allPosts.splice(postIndex, 1)[0];
             localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(allPosts));
+            
+            // Save to cloud
+            try {
+                await cloudStorage.saveToCloud(allPosts);
+                console.log('Post deleted and cloud updated');
+            } catch (error) {
+                console.error('Failed to update cloud after deletion:', error);
+                // Continue anyway since we saved to localStorage
+            }
             
             return deletedPost;
         },
