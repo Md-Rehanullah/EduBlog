@@ -191,15 +191,26 @@ function handleLogout() {
     showLoginForm();
 }
 
-// Load all dashboard data
+// In your dashboard.js file, update the loadDashboardData function:
+
 async function loadDashboardData() {
     console.log("Loading dashboard data");
     
     try {
-        // First sync with cloud to get latest data
+        // Try to force refresh from cloud first
+        if (typeof API.refresh === 'function') {
+            try {
+                await API.refresh();
+                console.log("Successfully refreshed data from cloud");
+            } catch (refreshError) {
+                console.warn("Couldn't refresh from cloud:", refreshError);
+            }
+        }
+        
+        // Then initialize with whatever data is available
         await API.posts.initializeWithSampleData();
         
-        // Then load stats and posts
+        // Load stats and posts
         loadStats();
         loadPosts();
     } catch (error) {
