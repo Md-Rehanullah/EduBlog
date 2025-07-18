@@ -271,8 +271,11 @@
     </button>
 
     <!-- Scripts -->
-    <script src="cloud-storage.js"></script>
-    <script src="api.js"></script>
-    <script src="script.js"></script>
+    <!-- Before closing body tag -->
+    <script src="cloud-storage.js"></script> <!-- Load first -->
+    <script src="api.js"></script> <!-- Load second -->
+    <script src="script.js"></script> <!-- Load last -->
+
+    
 </body>
 </html>
