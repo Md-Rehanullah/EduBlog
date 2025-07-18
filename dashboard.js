@@ -3,73 +3,74 @@
  * Handles the functionality of the admin dashboard
  */
 
-// Keep track of pagination and current state
-const dashboardState = {
-    currentPage: 1,
-    postsPerPage: 10,
-    currentPostId: null,
-    filterType: 'all',
-    filterStatus: 'all',
-    csrfToken: '',
-    isInitialized: false
-};
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize the dashboard
-    initDashboard();
+    console.log("Dashboard script loaded");
+    // Check authentication on page load
+    checkAuthentication();
+    
+    // Set up all event listeners
+    setupEventListeners();
 });
 
-// Initialize dashboard functionality
-function initDashboard() {
-    // Generate and set CSRF tokens
-    dashboardState.csrfToken = API.generateCsrfToken();
-    document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
-        input.value = dashboardState.csrfToken;
-    });
-    
-    // Check authentication status
-    checkAuthStatus();
-    
-    // Set up event listeners
-    setupDashboardEventListeners();
-}
-
-// Check if the user is authenticated
-function checkAuthStatus() {
+// Check if user is authenticated
+function checkAuthentication() {
     if (API.auth.isAuthenticated()) {
-        showDashboard();
-        
-        // Display username
-        const usernameDisplay = document.getElementById('username-display');
-        if (usernameDisplay) {
-            usernameDisplay.textContent = API.auth.getCurrentUser() || 'Admin';
-        }
-        
-        // Initialize dashboard content
-        loadDashboardContent();
+        console.log("User is authenticated");
+        showDashboardContent();
+        loadDashboardData();
     } else {
-        showLoginSection();
+        console.log("User is not authenticated");
+        showLoginForm();
     }
 }
 
-// Set up all event listeners for the dashboard
-function setupDashboardEventListeners() {
+// Show login form, hide dashboard
+function showLoginForm() {
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('dashboard-content').style.display = 'none';
+}
+
+// Show dashboard content, hide login form
+function showDashboardContent() {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('dashboard-content').style.display = 'block';
+    
+    // Display username
+    const username = API.auth.getCurrentUser();
+    if (username) {
+        document.getElementById('username-display').textContent = username;
+    }
+}
+
+// Set up all event listeners for dashboard functionality
+function setupEventListeners() {
+    console.log("Setting up event listeners");
+    
     // Login form submission
     const loginForm = document.getElementById('dashboard-login-form');
     if (loginForm) {
-        loginForm.addEventListener('submit', handleDashboardLogin);
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent page reload
+            handleLogin();
+        });
     }
     
     // Logout button
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent page reload
+            handleLogout();
+        });
     }
     
-    // Post form submission
-    const postForm = document.getElementById('create-post-form');
-    if (postForm) {
-        postForm.addEventListener('submit', handleSavePost);
+    // Post creation form
+    const createPostForm = document.getElementById('create-post-form');
+    if (createPostForm) {
+        createPostForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent page reload
+            handlePostSubmit();
+        });
     }
     
     // Reset form button
@@ -78,94 +79,102 @@ function setupDashboardEventListeners() {
         resetFormBtn.addEventListener('click', resetPostForm);
     }
     
-    // Filtering
-    document.getElementById('filter-type')?.addEventListener('change', handleFilterChange);
-    document.getElementById('filter-status')?.addEventListener('change', handleFilterChange);
-    document.getElementById('refresh-posts-btn')?.addEventListener('click', refreshPosts);
+    // Post filters
+    const filterType = document.getElementById('filter-type');
+    const filterStatus = document.getElementById('filter-status');
     
-    // Confirmation modal
-    document.getElementById('cancel-action')?.addEventListener('click', closeConfirmationModal);
-    document.getElementById('close-confirmation-modal')?.addEventListener('click', closeConfirmationModal);
-    document.getElementById('confirm-action')?.addEventListener('click', executeConfirmedAction);
+    if (filterType) {
+        filterType.addEventListener('change', filterPosts);
+    }
     
-    // Toast close button
-    document.querySelector('.toast-close')?.addEventListener('click', () => {
-        document.getElementById('dashboard-toast').classList.remove('show');
-    });
+    if (filterStatus) {
+        filterStatus.addEventListener('change', filterPosts);
+    }
     
-    // Mobile navigation toggle
-    const navToggle = document.getElementById('nav-toggle');
-    const navMenu = document.getElementById('nav-menu');
+    // Refresh posts button
+    const refreshBtn = document.getElementById('refresh-posts-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadPosts);
+    }
     
-    if (navToggle && navMenu) {
-        navToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
+    // Confirmation modal actions
+    const cancelAction = document.getElementById('cancel-action');
+    const confirmAction = document.getElementById('confirm-action');
+    const closeModal = document.getElementById('close-confirmation-modal');
+    
+    if (cancelAction) {
+        cancelAction.addEventListener('click', closeConfirmationModal);
+    }
+    
+    if (confirmAction) {
+        confirmAction.addEventListener('click', executeConfirmedAction);
+    }
+    
+    if (closeModal) {
+        closeModal.addEventListener('click', closeConfirmationModal);
+    }
+    
+    // Close toast message
+    const toastClose = document.querySelector('.toast-close');
+    if (toastClose) {
+        toastClose.addEventListener('click', function() {
+            document.getElementById('dashboard-toast').classList.remove('show');
         });
     }
 }
 
-// Handle dashboard login
-async function handleDashboardLogin(e) {
-    e.preventDefault();
-    
+// Handle login form submission
+async function handleLogin() {
+    console.log("Login attempt");
     const username = document.getElementById('dashboard-username').value;
     const password = document.getElementById('dashboard-password').value;
     const errorElement = document.getElementById('login-error-message');
     
-    // Reset error message
     if (errorElement) {
         errorElement.textContent = '';
         errorElement.classList.add('hidden');
     }
     
     try {
-        const result = await API.auth.login({ username, password });
+        const result = await API.auth.login({
+            username: username,
+            password: password
+        });
         
         if (result.success) {
+            console.log("Login successful");
             showToast(`Welcome, ${result.username}!`);
-            showDashboard();
-            loadDashboardContent();
+            showDashboardContent();
+            loadDashboardData();
         }
     } catch (error) {
+        console.error("Login failed:", error);
         if (errorElement) {
-            errorElement.textContent = error.error || 'Invalid login credentials';
+            errorElement.textContent = error.error || 'Invalid username or password';
             errorElement.classList.remove('hidden');
         } else {
-            showToast('Login failed. Invalid username or password.', 'error');
+            showToast('Login failed. Please check your credentials.', 'error');
         }
     }
 }
 
-// Handle logout
+// Handle logout button click
 function handleLogout() {
+    console.log("Logout attempt");
     API.auth.logout();
     showToast('You have been logged out successfully');
-    showLoginSection();
+    showLoginForm();
 }
 
-// Show the login section, hide dashboard
-function showLoginSection() {
-    document.getElementById('login-section').style.display = 'block';
-    document.getElementById('dashboard-content').classList.add('hidden');
-}
-
-// Show the dashboard, hide login section
-function showDashboard() {
-    document.getElementById('login-section').style.display = 'none';
-    document.getElementById('dashboard-content').classList.remove('hidden');
-}
-
-// Load dashboard content
-function loadDashboardContent() {
-    // Update statistics
-    updateStats();
-    
-    // Load posts
+// Load all dashboard data
+function loadDashboardData() {
+    console.log("Loading dashboard data");
+    loadStats();
     loadPosts();
 }
 
-// Update dashboard statistics
-function updateStats() {
+// Load and display post statistics
+function loadStats() {
     try {
         const stats = API.posts.getStats();
         
@@ -173,197 +182,123 @@ function updateStats() {
         document.getElementById('published-posts').textContent = stats.publishedPosts;
         document.getElementById('draft-posts').textContent = stats.draftPosts;
     } catch (error) {
-        console.error('Error updating stats:', error);
+        console.error('Error loading stats:', error);
+        showToast('Failed to load statistics', 'error');
     }
 }
 
-// Load posts with current filters and pagination
+// Load posts based on current filters
 function loadPosts() {
-    try {
-        const postsListElement = document.getElementById('posts-list');
-        if (!postsListElement) return;
-        
-        // Show loading state
-        postsListElement.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading posts...</div>';
-        
-        // Get filters
-        const contentType = dashboardState.filterType !== 'all' ? dashboardState.filterType : null;
-        const isPublished = dashboardState.filterStatus === 'published' ? true :
-                           dashboardState.filterStatus === 'draft' ? false : null;
-        
-        // Get posts with pagination
-        const result = API.posts.getPosts({
-            page: dashboardState.currentPage,
-            limit: dashboardState.postsPerPage,
-            contentType,
-            isPublished,
-            sortBy: 'updatedAt',
-            sortOrder: 'desc'
-        });
-        
-        renderPosts(result.posts, result.pagination);
-    } catch (error) {
-        console.error('Error loading posts:', error);
-        document.getElementById('posts-list').innerHTML = 
-            '<div class="error-state">Error loading posts. Please try again.</div>';
-    }
-}
-
-// Render posts to the posts list
-function renderPosts(posts, pagination) {
+    console.log("Loading posts");
     const postsListElement = document.getElementById('posts-list');
-    const paginationElement = document.getElementById('posts-pagination');
     
     if (!postsListElement) return;
     
-    // Clear current content
-    postsListElement.innerHTML = '';
+    // Show loading state
+    postsListElement.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading posts...</div>';
     
-    // Handle empty state
+    try {
+        // Get filter values
+        const typeFilter = document.getElementById('filter-type').value;
+        const statusFilter = document.getElementById('filter-status').value;
+        
+        // Prepare filter options
+        const filterOptions = {
+            contentType: typeFilter !== 'all' ? typeFilter : null,
+            isPublished: statusFilter !== 'all' ? statusFilter === 'published' : null
+        };
+        
+        // Get posts with filters
+        const result = API.posts.getPosts(filterOptions);
+        
+        // Render posts
+        renderPosts(result.posts);
+    } catch (error) {
+        console.error('Error loading posts:', error);
+        postsListElement.innerHTML = '<div class="error-state">Error loading posts. Please try again.</div>';
+    }
+}
+
+// Render posts to the UI
+function renderPosts(posts) {
+    const postsListElement = document.getElementById('posts-list');
+    
+    if (!postsListElement) return;
+    
     if (posts.length === 0) {
-        postsListElement.innerHTML = '<div class="empty-state">No posts match the selected filters.</div>';
-        if (paginationElement) paginationElement.innerHTML = '';
+        postsListElement.innerHTML = '<div class="empty-state">No posts found. Create your first post!</div>';
         return;
     }
     
+    postsListElement.innerHTML = '';
+    
     // Create post items
     posts.forEach(post => {
-        const postElement = createPostElement(post);
-        postsListElement.appendChild(postElement);
-    });
-    
-    // Render pagination if provided and if there are multiple pages
-    if (paginationElement && pagination && pagination.totalPages > 1) {
-        renderPagination(paginationElement, pagination, (page) => {
-            dashboardState.currentPage = page;
-            loadPosts();
-        });
-    } else if (paginationElement) {
-        paginationElement.innerHTML = '';
-    }
-}
-
-// Create an individual post element
-function createPostElement(post) {
-    const element = document.createElement('div');
-    element.className = 'post-item';
-    element.setAttribute('data-id', post.id);
-    
-    const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
-    
-    const statusBadge = post.isPublished ? 
-        '<span class="status-badge published">Published</span>' : 
-        '<span class="status-badge draft">Draft</span>';
-    
-    const typeLabel = post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1);
-    
-    element.innerHTML = `
-        <div class="post-header">
-            <h3 class="post-title">${post.title}</h3>
-            <div class="post-meta">
-                ${statusBadge}
-                <span class="post-type">${typeLabel}</span>
-                <span class="post-date"><i class="fas fa-calendar"></i> ${publishedDate}</span>
+        const postItem = document.createElement('div');
+        postItem.className = 'post-item';
+        
+        const statusClass = post.isPublished ? 'published' : 'draft';
+        const statusText = post.isPublished ? 'Published' : 'Draft';
+        const typeText = post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1);
+        const dateText = new Date(post.publishedAt).toLocaleDateString();
+        
+        postItem.innerHTML = `
+            <div class="post-header">
+                <h3 class="post-title">${post.title}</h3>
+                <div class="post-meta">
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                    <span class="post-type">${typeText}</span>
+                    <span class="post-date"><i class="fas fa-calendar"></i> ${dateText}</span>
+                </div>
             </div>
-        </div>
-        <div class="post-excerpt">${post.excerpt}</div>
-        <div class="post-actions">
-            <button class="btn btn-sm btn-edit" data-id="${post.id}" aria-label="Edit post">
-                <i class="fas fa-edit"></i> Edit
-            </button>
-            <button class="btn btn-sm btn-danger" data-id="${post.id}" aria-label="Delete post">
-                <i class="fas fa-trash"></i> Delete
-            </button>
-            <button class="btn btn-sm btn-view" data-id="${post.id}" aria-label="View post">
-                <i class="fas fa-eye"></i> View
-            </button>
-        </div>
-    `;
-    
-    // Add event listeners
-    element.querySelector('.btn-edit').addEventListener('click', () => editPost(post.id));
-    element.querySelector('.btn-danger').addEventListener('click', () => confirmDeletePost(post.id));
-    element.querySelector('.btn-view').addEventListener('click', () => viewPost(post.id));
-    
-    return element;
+            <div class="post-excerpt">${post.excerpt}</div>
+            <div class="post-actions">
+                <button class="btn btn-sm btn-edit" data-id="${post.id}" aria-label="Edit post">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-sm btn-danger" data-id="${post.id}" aria-label="Delete post">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+                ${post.isPublished ? `
+                <button class="btn btn-sm btn-view" data-id="${post.id}" aria-label="View post">
+                    <i class="fas fa-eye"></i> View
+                </button>
+                ` : ''}
+            </div>
+        `;
+        
+        postsListElement.appendChild(postItem);
+        
+        // Add click events to post actions
+        const editBtn = postItem.querySelector('.btn-edit');
+        const deleteBtn = postItem.querySelector('.btn-danger');
+        const viewBtn = postItem.querySelector('.btn-view');
+        
+        editBtn.addEventListener('click', function() {
+            editPost(post.id);
+        });
+        
+        deleteBtn.addEventListener('click', function() {
+            confirmDeletePost(post.id);
+        });
+        
+        if (viewBtn) {
+            viewBtn.addEventListener('click', function() {
+                viewPost(post.id);
+            });
+        }
+    });
 }
 
-// Render pagination controls
-function renderPagination(element, pagination, onPageChange) {
-    element.innerHTML = '';
-    
-    if (pagination.totalPages <= 1) return;
-    
-    const ul = document.createElement('ul');
-    ul.className = 'pagination-list';
-    
-    // Previous button
-    const prevLi = document.createElement('li');
-    const prevButton = document.createElement('button');
-    prevButton.innerHTML = '<i class="fas fa-chevron-left"></i> Prev';
-    prevButton.className = 'pagination-link';
-    prevButton.disabled = pagination.page <= 1;
-    prevButton.setAttribute('aria-label', 'Previous page');
-    prevButton.addEventListener('click', () => onPageChange(pagination.page - 1));
-    prevLi.appendChild(prevButton);
-    ul.appendChild(prevLi);
-    
-    // Page numbers
-    const maxPages = Math.min(5, pagination.totalPages);
-    let startPage = Math.max(1, pagination.page - 2);
-    let endPage = Math.min(pagination.totalPages, startPage + maxPages - 1);
-    
-    // Adjust start page if we're near the end
-    if (endPage - startPage < maxPages - 1) {
-        startPage = Math.max(1, endPage - maxPages + 1);
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        const li = document.createElement('li');
-        const button = document.createElement('button');
-        button.textContent = i;
-        button.className = 'pagination-link' + (i === pagination.page ? ' active' : '');
-        button.setAttribute('aria-label', `Page ${i}`);
-        button.setAttribute('aria-current', i === pagination.page ? 'page' : 'false');
-        button.addEventListener('click', () => onPageChange(i));
-        li.appendChild(button);
-        ul.appendChild(li);
-    }
-    
-    // Next button
-    const nextLi = document.createElement('li');
-    const nextButton = document.createElement('button');
-    nextButton.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
-    nextButton.className = 'pagination-link';
-    nextButton.disabled = pagination.page >= pagination.totalPages;
-    nextButton.setAttribute('aria-label', 'Next page');
-    nextButton.addEventListener('click', () => onPageChange(pagination.page + 1));
-    nextLi.appendChild(nextButton);
-    ul.appendChild(nextLi);
-    
-    element.appendChild(ul);
+// Filter posts based on selected filters
+function filterPosts() {
+    console.log("Filtering posts");
+    loadPosts(); // Reload with new filters
 }
 
-// Handle filter changes
-function handleFilterChange() {
-    dashboardState.filterType = document.getElementById('filter-type').value;
-    dashboardState.filterStatus = document.getElementById('filter-status').value;
-    dashboardState.currentPage = 1; // Reset to first page when filtering
-    loadPosts();
-}
-
-// Refresh posts list
-function refreshPosts() {
-    loadPosts();
-    showToast('Posts refreshed');
-}
-
-// Edit a post
+// Edit an existing post
 function editPost(postId) {
+    console.log("Editing post", postId);
     try {
         const post = API.posts.getPostById(postId);
         if (!post) {
@@ -375,6 +310,7 @@ function editPost(postId) {
         document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Edit Post';
         
         // Fill form with post data
+        document.getElementById('post-id').value = post.id;
         document.getElementById('post-title').value = post.title;
         document.getElementById('post-type').value = post.contentType;
         document.getElementById('post-excerpt').value = post.excerpt;
@@ -382,52 +318,39 @@ function editPost(postId) {
         document.getElementById('post-tags').value = post.tags ? post.tags.join(', ') : '';
         document.getElementById('post-image').value = post.imageUrl || '';
         document.getElementById('post-published').checked = post.isPublished;
-        document.getElementById('post-id').value = post.id;
         
         // Update submit button text
         document.querySelector('#create-post-form button[type="submit"]').textContent = 'Update Post';
         
-        // Store current post id
-        dashboardState.currentPostId = post.id;
-        
         // Scroll to form
-        document.querySelector('.dashboard-form-section').scrollIntoView({ behavior: 'smooth' });
+        document.querySelector('.dashboard-form-section').scrollIntoView({ 
+            behavior: 'smooth' 
+        });
     } catch (error) {
         console.error('Error editing post:', error);
         showToast('Failed to load post data', 'error');
     }
 }
 
-// Reset post form
+// Reset the post form
 function resetPostForm() {
-    // Reset form fields
+    console.log("Resetting post form");
     document.getElementById('create-post-form').reset();
     document.getElementById('post-id').value = '';
     
     // Reset form title and button
     document.getElementById('form-title').innerHTML = '<i class="fas fa-plus-circle"></i> Create New Post';
     document.querySelector('#create-post-form button[type="submit"]').textContent = 'Save Post';
-    
-    // Reset stored post id
-    dashboardState.currentPostId = null;
 }
 
-// Handle save post form submission
-async function handleSavePost(e) {
-    e.preventDefault();
-    
-    // Check CSRF token
-    const token = document.getElementById('post-csrf-token').value;
-    if (!API.verifyCsrfToken(token)) {
-        showToast('Security validation failed. Please refresh the page and try again.', 'error');
-        return;
-    }
-    
-    const form = document.getElementById('create-post-form');
-    const formData = new FormData(form);
-    
+// Handle post form submission
+function handlePostSubmit() {
+    console.log("Post form submitted");
     try {
-        // Gather post data
+        const form = document.getElementById('create-post-form');
+        const formData = new FormData(form);
+        
+        // Prepare post data
         const postData = {
             title: formData.get('title'),
             contentType: formData.get('contentType'),
@@ -438,16 +361,10 @@ async function handleSavePost(e) {
             isPublished: formData.get('published') === 'on'
         };
         
-        // Validate required fields
-        if (!postData.title || !postData.contentType || !postData.excerpt || !postData.content) {
-            showToast('Please fill in all required fields', 'error');
-            return;
-        }
-        
-        // Check if we're updating or creating
+        // Check if we're creating or updating
         const postId = formData.get('id');
-        let result;
         
+        let result;
         if (postId) {
             // Update existing post
             result = API.posts.updatePost(postId, postData);
@@ -458,94 +375,99 @@ async function handleSavePost(e) {
             showToast(`Post "${result.title}" created successfully`);
         }
         
-        // Reset form
+        // Reset form and refresh data
         resetPostForm();
-        
-        // Refresh posts list and stats
-        loadPosts();
-        updateStats();
+        loadDashboardData();
     } catch (error) {
         console.error('Error saving post:', error);
-        showToast(`Failed to save post: ${error.message || 'Unknown error'}`, 'error');
+        showToast(`Error: ${error.message || 'Failed to save post'}`, 'error');
     }
 }
 
-// Confirm post deletion
+// Show confirmation modal for post deletion
 function confirmDeletePost(postId) {
-    const post = API.posts.getPostById(postId);
-    if (!post) {
-        showToast('Post not found', 'error');
-        return;
+    console.log("Confirming delete for post", postId);
+    try {
+        const post = API.posts.getPostById(postId);
+        if (!post) {
+            showToast('Post not found', 'error');
+            return;
+        }
+        
+        // Set up confirmation modal
+        document.getElementById('confirmation-message').textContent = 
+            `Are you sure you want to delete the post "${post.title}"? This action cannot be undone.`;
+        
+        // Store post ID for confirmation action
+        document.getElementById('confirm-action').setAttribute('data-post-id', postId);
+        
+        // Show modal
+        document.getElementById('confirmation-modal').classList.add('active');
+    } catch (error) {
+        console.error('Error preparing delete confirmation:', error);
+        showToast('Error loading post information', 'error');
     }
-    
-    // Set confirmation message
-    document.getElementById('confirmation-message').textContent = 
-        `Are you sure you want to delete the post "${post.title}"? This action cannot be undone.`;
-    
-    // Store post id for confirmation handler
-    document.getElementById('confirm-action').setAttribute('data-id', postId);
-    
-    // Show modal
-    document.getElementById('confirmation-modal').classList.add('active');
 }
 
-// Close confirmation modal
+// Close the confirmation modal
 function closeConfirmationModal() {
     document.getElementById('confirmation-modal').classList.remove('active');
 }
 
-// Execute confirmed action (delete post)
+// Execute the confirmed delete action
 function executeConfirmedAction() {
-    const postId = document.getElementById('confirm-action').getAttribute('data-id');
-    
     try {
+        // Get post ID from button data attribute
+        const postId = document.getElementById('confirm-action').getAttribute('data-post-id');
+        
+        if (!postId) {
+            throw new Error('Post ID not found');
+        }
+        
         // Delete the post
         const deletedPost = API.posts.deletePost(postId);
         
-        // Close modal
+        // Show success message and close modal
+        showToast(`Post "${deletedPost.title}" deleted successfully`);
         closeConfirmationModal();
         
-        // Show success message
-        showToast(`Post "${deletedPost.title}" was deleted successfully`);
+        // Refresh dashboard data
+        loadDashboardData();
         
-        // Refresh posts and stats
-        loadPosts();
-        updateStats();
-        
-        // Reset form if we were editing the deleted post
-        if (dashboardState.currentPostId === parseInt(postId)) {
+        // Reset form if we were editing this post
+        const editingId = document.getElementById('post-id').value;
+        if (editingId === postId) {
             resetPostForm();
         }
     } catch (error) {
         console.error('Error deleting post:', error);
-        showToast('Failed to delete post', 'error');
+        showToast(`Error: ${error.message || 'Failed to delete post'}`, 'error');
         closeConfirmationModal();
     }
 }
 
-// View a post
+// Open post in a new tab
 function viewPost(postId) {
-    const post = API.posts.getPostById(postId);
-    if (!post) {
-        showToast('Post not found', 'error');
-        return;
-    }
-    
-    // Open post in new tab/window
-    const url = `index.html?post=${postId}`;
-    window.open(url, '_blank');
+    console.log("Viewing post", postId);
+    window.open(`index.html?post=${postId}`, '_blank');
 }
 
 // Show toast notification
 function showToast(message, type = 'success') {
+    console.log(`Toast: ${type} - ${message}`);
     const toast = document.getElementById('dashboard-toast');
     const toastMessage = document.getElementById('dashboard-toast-message');
     const toastIcon = document.getElementById('dashboard-toast-icon');
     
-    toastMessage.textContent = message;
-    toast.className = `toast show ${type}`;
+    if (!toast || !toastMessage || !toastIcon) return;
     
-    // Update icon based on type
+    toastMessage.textContent = message;
+    
+    // Set toast type class
+    toast.className = 'toast';
+    toast.classList.add(type);
+    
+    // Set icon based on type
     if (type === 'error') {
         toastIcon.className = 'fas fa-exclamation-circle';
     } else if (type === 'warning') {
@@ -554,8 +476,11 @@ function showToast(message, type = 'success') {
         toastIcon.className = 'fas fa-check-circle';
     }
     
-    // Auto hide after 4 seconds
+    // Show toast
+    toast.classList.add('show');
+    
+    // Auto-hide after 5 seconds
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 4000);
+    }, 5000);
 }
