@@ -13,7 +13,7 @@ const CloudStorage = (function() {
     // Save data to cloud
     async function save(data) {
         try {
-            console.log('Saving data to cloud...');
+            console.log('Saving data to cloud...', data);
             const response = await fetch(`${config.baseUrl}/${config.binId}`, {
                 method: 'PUT',
                 headers: {
@@ -28,7 +28,7 @@ const CloudStorage = (function() {
             }
             
             const result = await response.json();
-            console.log('Data saved successfully to cloud');
+            console.log('Data saved successfully to cloud', result);
             return result;
         } catch (error) {
             console.error('Error saving to cloud:', error);
@@ -52,7 +52,7 @@ const CloudStorage = (function() {
             }
             
             const result = await response.json();
-            console.log('Data loaded successfully from cloud');
+            console.log('Data loaded successfully from cloud', result.record);
             return result.record;
         } catch (error) {
             console.error('Error loading from cloud:', error);
@@ -65,4 +65,4 @@ const CloudStorage = (function() {
         save,
         load
     };
-})();
+})(); // Added closing parentheses here to execute the function
