@@ -546,3 +546,37 @@ function initBackToTopButton() {
         });
     });
 }
+
+
+
+
+
+// Add this function to your script.js
+
+// Function to check for post query parameter in URL
+function checkForPostParam() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('post');
+    
+    if (postId) {
+        try {
+            const post = API.posts.getPostById(parseInt(postId));
+            if (post) {
+                openPostDetail(post.id);
+            }
+        } catch (error) {
+            console.error('Error loading post from URL:', error);
+        }
+    }
+}
+
+// Make sure to call this function when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Your existing initialization code...
+    
+    // Load posts
+    loadPosts();
+    
+    // Check for post in URL
+    checkForPostParam();
+});
