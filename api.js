@@ -13,8 +13,8 @@ const API = (function() {
     
     // JSONbin.io API configuration
     const CLOUD_CONFIG = {
-        BIN_ID: '65da41af1f5677401f37de49', // Create a free bin at JSONbin.io and replace this
-        API_KEY: '$2a$10$JFeUkXP.H0YDwX6MgRTqRu8Yln8jR90zswKN3iHsEMpf1X9H/1yPi', // Your JSONbin master key
+        BIN_ID: '687a3b7c8de3783286a980d5', // Create a free bin at JSONbin.io and replace this
+        API_KEY: '$2a$10$LDrnLHKMOD96k5ONKE/RH.CDZTR9.vOSaed04OvhvdzczFi7FMzU6', // Your JSONbin master key
         BASE_URL: 'https://api.jsonbin.io/v3/b'
     };
     
