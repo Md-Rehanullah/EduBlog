@@ -1,10 +1,23 @@
 /**
- * EduBlog Dashboard Script
- * Handles the functionality of the admin dashboard
+ * EduBlog Dashboard Script - Fixed Version
+ * Handles the functionality of the admin dashboard with cloud storage integration
  */
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Dashboard script loaded");
+    
+    // Check if API is available
+    if (typeof API === 'undefined') {
+        console.error("API module not found. Make sure api.js is loaded before dashboard.js");
+        document.body.innerHTML = '<div class="error-message" style="padding: 20px; margin: 20px; text-align: center;">Error: API module not loaded. Please check your internet connection and refresh the page.</div>';
+        return;
+    }
+    
+    // Check if CloudStorage is available
+    if (typeof CloudStorage === 'undefined') {
+        console.error("CloudStorage module not found. Make sure cloud-storage.js is loaded");
+        showToast("Cloud storage module not found. Posts may not persist across devices.", "warning");
+    }
     
     // Check authentication on page load
     checkAuthentication();
@@ -27,19 +40,26 @@ function checkAuthentication() {
 
 // Show login form, hide dashboard
 function showLoginForm() {
-    document.getElementById('login-section').style.display = 'block';
-    document.getElementById('dashboard-content').style.display = 'none';
+    const loginSection = document.getElementById('login-section');
+    const dashboardContent = document.getElementById('dashboard-content');
+    
+    if (loginSection) loginSection.style.display = 'block';
+    if (dashboardContent) dashboardContent.style.display = 'none';
 }
 
 // Show dashboard content, hide login form
 function showDashboardContent() {
-    document.getElementById('login-section').style.display = 'none';
-    document.getElementById('dashboard-content').style.display = 'block';
+    const loginSection = document.getElementById('login-section');
+    const dashboardContent = document.getElementById('dashboard-content');
+    
+    if (loginSection) loginSection.style.display = 'none';
+    if (dashboardContent) dashboardContent.style.display = 'block';
     
     // Display username
     const username = API.auth.getCurrentUser();
-    if (username) {
-        document.getElementById('username-display').textContent = username;
+    const usernameDisplay = document.getElementById('username-display');
+    if (username && usernameDisplay) {
+        usernameDisplay.textContent = username;
     }
 }
 
@@ -119,7 +139,8 @@ function setupEventListeners() {
     const toastClose = document.querySelector('.toast-close');
     if (toastClose) {
         toastClose.addEventListener('click', function() {
-            document.getElementById('dashboard-toast').classList.remove('show');
+            const toast = document.getElementById('dashboard-toast');
+            if (toast) toast.classList.remove('show');
         });
     }
 }
@@ -146,6 +167,9 @@ async function handleLogin() {
             console.log("Login successful");
             showToast(`Welcome, ${result.username}!`);
             showDashboardContent();
+            
+            // Sync with cloud before loading dashboard
+            await API.posts.initializeWithSampleData();
             loadDashboardData();
         }
     } catch (error) {
@@ -171,16 +195,18 @@ function handleLogout() {
 async function loadDashboardData() {
     console.log("Loading dashboard data");
     
-    // First make sure we have the latest data from the cloud
     try {
+        // First sync with cloud to get latest data
         await API.posts.initializeWithSampleData();
+        
+        // Then load stats and posts
         loadStats();
         loadPosts();
     } catch (error) {
         console.error("Error loading dashboard data:", error);
-        showToast("Failed to sync with cloud storage", "error");
+        showToast("Error syncing with cloud. Some data may not be up to date.", "warning");
         
-        // Still try to load local data
+        // Still try to load stats and posts from local storage
         loadStats();
         loadPosts();
     }
@@ -191,9 +217,13 @@ function loadStats() {
     try {
         const stats = API.posts.getStats();
         
-        document.getElementById('total-posts').textContent = stats.totalPosts;
-        document.getElementById('published-posts').textContent = stats.publishedPosts;
-        document.getElementById('draft-posts').textContent = stats.draftPosts;
+        const totalPostsElement = document.getElementById('total-posts');
+        const publishedPostsElement = document.getElementById('published-posts');
+        const draftPostsElement = document.getElementById('draft-posts');
+        
+        if (totalPostsElement) totalPostsElement.textContent = stats.totalPosts;
+        if (publishedPostsElement) publishedPostsElement.textContent = stats.publishedPosts;
+        if (draftPostsElement) draftPostsElement.textContent = stats.draftPosts;
     } catch (error) {
         console.error('Error loading stats:', error);
         showToast('Failed to load statistics', 'error');
@@ -212,8 +242,8 @@ function loadPosts() {
     
     try {
         // Get filter values
-        const typeFilter = document.getElementById('filter-type').value;
-        const statusFilter = document.getElementById('filter-status').value;
+        const typeFilter = document.getElementById('filter-type')?.value || 'all';
+        const statusFilter = document.getElementById('filter-status')?.value || 'all';
         
         // Prepare filter options
         const filterOptions = {
@@ -253,7 +283,13 @@ function renderPosts(posts) {
         const statusClass = post.isPublished ? 'published' : 'draft';
         const statusText = post.isPublished ? 'Published' : 'Draft';
         const typeText = post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1);
-        const dateText = new Date(post.publishedAt).toLocaleDateString();
+        
+        let dateText = 'Unknown date';
+        try {
+            dateText = new Date(post.publishedAt).toLocaleDateString();
+        } catch (e) {
+            console.error('Error formatting date for post', post.id);
+        }
         
         postItem.innerHTML = `
             <div class="post-header">
@@ -287,13 +323,17 @@ function renderPosts(posts) {
         const deleteBtn = postItem.querySelector('.btn-danger');
         const viewBtn = postItem.querySelector('.btn-view');
         
-        editBtn.addEventListener('click', function() {
-            editPost(post.id);
-        });
+        if (editBtn) {
+            editBtn.addEventListener('click', function() {
+                editPost(post.id);
+            });
+        }
         
-        deleteBtn.addEventListener('click', function() {
-            confirmDeletePost(post.id);
-        });
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', function() {
+                confirmDeletePost(post.id);
+            });
+        }
         
         if (viewBtn) {
             viewBtn.addEventListener('click', function() {
@@ -313,32 +353,48 @@ function filterPosts() {
 function editPost(postId) {
     console.log("Editing post", postId);
     try {
-        const post = API.posts.getPostById(postId);
+        const post = API.posts.getPostById(parseInt(postId));
         if (!post) {
             showToast('Post not found', 'error');
             return;
         }
         
         // Update form title
-        document.getElementById('form-title').innerHTML = '<i class="fas fa-edit"></i> Edit Post';
+        const formTitle = document.getElementById('form-title');
+        if (formTitle) {
+            formTitle.innerHTML = '<i class="fas fa-edit"></i> Edit Post';
+        }
         
         // Fill form with post data
-        document.getElementById('post-id').value = post.id;
-        document.getElementById('post-title').value = post.title;
-        document.getElementById('post-type').value = post.contentType;
-        document.getElementById('post-excerpt').value = post.excerpt;
-        document.getElementById('post-content').value = post.content;
-        document.getElementById('post-tags').value = post.tags ? post.tags.join(', ') : '';
-        document.getElementById('post-image').value = post.imageUrl || '';
-        document.getElementById('post-published').checked = post.isPublished;
+        const idInput = document.getElementById('post-id');
+        const titleInput = document.getElementById('post-title');
+        const typeInput = document.getElementById('post-type');
+        const excerptInput = document.getElementById('post-excerpt');
+        const contentInput = document.getElementById('post-content');
+        const tagsInput = document.getElementById('post-tags');
+        const imageInput = document.getElementById('post-image');
+        const publishedInput = document.getElementById('post-published');
+        
+        if (idInput) idInput.value = post.id;
+        if (titleInput) titleInput.value = post.title;
+        if (typeInput) typeInput.value = post.contentType;
+        if (excerptInput) excerptInput.value = post.excerpt;
+        if (contentInput) contentInput.value = post.content;
+        if (tagsInput) tagsInput.value = post.tags ? post.tags.join(', ') : '';
+        if (imageInput) imageInput.value = post.imageUrl || '';
+        if (publishedInput) publishedInput.checked = post.isPublished;
         
         // Update submit button text
-        document.querySelector('#create-post-form button[type="submit"]').textContent = 'Update Post';
+        const submitButton = document.querySelector('#create-post-form button[type="submit"]');
+        if (submitButton) {
+            submitButton.textContent = 'Update Post';
+        }
         
         // Scroll to form
-        document.querySelector('.dashboard-form-section').scrollIntoView({ 
-            behavior: 'smooth' 
-        });
+        const formSection = document.querySelector('.dashboard-form-section');
+        if (formSection) {
+            formSection.scrollIntoView({ behavior: 'smooth' });
+        }
     } catch (error) {
         console.error('Error editing post:', error);
         showToast('Failed to load post data', 'error');
@@ -348,12 +404,17 @@ function editPost(postId) {
 // Reset the post form
 function resetPostForm() {
     console.log("Resetting post form");
-    document.getElementById('create-post-form').reset();
-    document.getElementById('post-id').value = '';
+    const form = document.getElementById('create-post-form');
+    const idInput = document.getElementById('post-id');
+    const formTitle = document.getElementById('form-title');
+    const submitButton = document.querySelector('#create-post-form button[type="submit"]');
+    
+    if (form) form.reset();
+    if (idInput) idInput.value = '';
     
     // Reset form title and button
-    document.getElementById('form-title').innerHTML = '<i class="fas fa-plus-circle"></i> Create New Post';
-    document.querySelector('#create-post-form button[type="submit"]').textContent = 'Save Post';
+    if (formTitle) formTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Create New Post';
+    if (submitButton) submitButton.textContent = 'Save Post';
 }
 
 // Handle post form submission
@@ -361,7 +422,14 @@ async function handlePostSubmit() {
     console.log("Post form submitted");
     try {
         const form = document.getElementById('create-post-form');
+        if (!form) {
+            throw new Error('Form not found');
+        }
+        
         const formData = new FormData(form);
+        
+        // Show processing message
+        showToast('Processing your request...', 'info');
         
         // Prepare post data
         const postData = {
@@ -373,9 +441,6 @@ async function handlePostSubmit() {
             imageUrl: formData.get('image') || null,
             isPublished: formData.get('published') === 'on'
         };
-        
-        // Show loading state
-        showToast('Saving post...', 'info');
         
         // Check if we're creating or updating
         const postId = formData.get('id');
@@ -404,21 +469,31 @@ async function handlePostSubmit() {
 function confirmDeletePost(postId) {
     console.log("Confirming delete for post", postId);
     try {
-        const post = API.posts.getPostById(postId);
+        const post = API.posts.getPostById(parseInt(postId));
         if (!post) {
             showToast('Post not found', 'error');
             return;
         }
         
         // Set up confirmation modal
-        document.getElementById('confirmation-message').textContent = 
-            `Are you sure you want to delete the post "${post.title}"? This action cannot be undone.`;
+        const messageElement = document.getElementById('confirmation-message');
+        const confirmAction = document.getElementById('confirm-action');
+        const modal = document.getElementById('confirmation-modal');
+        
+        if (messageElement) {
+            messageElement.textContent = 
+                `Are you sure you want to delete the post "${post.title}"? This action cannot be undone.`;
+        }
         
         // Store post ID for confirmation action
-        document.getElementById('confirm-action').setAttribute('data-post-id', postId);
+        if (confirmAction) {
+            confirmAction.setAttribute('data-post-id', postId);
+        }
         
         // Show modal
-        document.getElementById('confirmation-modal').classList.add('active');
+        if (modal) {
+            modal.classList.add('active');
+        }
     } catch (error) {
         console.error('Error preparing delete confirmation:', error);
         showToast('Error loading post information', 'error');
@@ -427,24 +502,32 @@ function confirmDeletePost(postId) {
 
 // Close the confirmation modal
 function closeConfirmationModal() {
-    document.getElementById('confirmation-modal').classList.remove('active');
+    const modal = document.getElementById('confirmation-modal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
 }
 
 // Execute the confirmed delete action
 async function executeConfirmedAction() {
     try {
         // Get post ID from button data attribute
-        const postId = document.getElementById('confirm-action').getAttribute('data-post-id');
+        const confirmAction = document.getElementById('confirm-action');
+        if (!confirmAction) {
+            throw new Error('Confirmation button not found');
+        }
+        
+        const postId = confirmAction.getAttribute('data-post-id');
         
         if (!postId) {
             throw new Error('Post ID not found');
         }
         
-        // Show loading state
-        showToast('Deleting post...', 'info');
+        // Show processing message
+        showToast('Processing your request...', 'info');
         
         // Delete the post
-        const deletedPost = await API.posts.deletePost(postId);
+        const deletedPost = await API.posts.deletePost(parseInt(postId));
         
         // Show success message and close modal
         showToast(`Post "${deletedPost.title}" deleted successfully`);
@@ -454,7 +537,7 @@ async function executeConfirmedAction() {
         loadDashboardData();
         
         // Reset form if we were editing this post
-        const editingId = document.getElementById('post-id').value;
+        const editingId = document.getElementById('post-id')?.value;
         if (editingId === postId) {
             resetPostForm();
         }
@@ -478,7 +561,11 @@ function showToast(message, type = 'success') {
     const toastMessage = document.getElementById('dashboard-toast-message');
     const toastIcon = document.getElementById('dashboard-toast-icon');
     
-    if (!toast || !toastMessage || !toastIcon) return;
+    if (!toast || !toastMessage || !toastIcon) {
+        console.error('Toast elements not found in DOM');
+        alert(message); // Fallback if toast elements not found
+        return;
+    }
     
     toastMessage.textContent = message;
     
