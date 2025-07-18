@@ -31,7 +31,7 @@ function setupEventListeners() {
             e.preventDefault();
             const password = document.getElementById('dashboard-password').value;
             // UPDATED PASSWORD HERE:
-            if (password === 'admin123') {
+            if (password === 'admin 123') {
                 isAuthenticated = true;
                 localStorage.setItem('isAuthenticated', 'true');
                 checkAuth();
