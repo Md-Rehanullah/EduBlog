@@ -30,7 +30,7 @@ function setupEventListeners() {
         passwordForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const password = document.getElementById('dashboard-password').value;
-            if (password === 'kaalel') {
+            if (password === 'admin123') {
                 isAuthenticated = true;
                 localStorage.setItem('isAuthenticated', 'true');
                 checkAuth();
