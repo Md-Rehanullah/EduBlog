@@ -13,24 +13,57 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Initialize the API with sample data if needed
-    API.posts.initializeWithSampleData();
+    // Initialize the API with sample data if needed - now with cloud sync
+    initializeData();
     
     // Setup navigation and UI event listeners
     setupNavigation();
-    
-    // Load posts into content sections
-    loadAndDisplayPosts();
-    
-    // Check for post in URL parameters
-    checkForPostInUrl();
 });
+
+// Initialize data with cloud sync
+async function initializeData() {
+    try {
+        // Show loading indicator
+        showLoadingIndicator(true);
+        
+        // Initialize and sync data with cloud
+        await API.posts.initializeWithSampleData();
+        
+        // Load posts into content sections
+        loadAndDisplayPosts();
+        
+        // Check for post in URL parameters
+        checkForPostInUrl();
+    } catch (error) {
+        console.error("Error initializing data:", error);
+        showErrorMessage("Failed to load content. Please try again later.");
+    } finally {
+        // Hide loading indicator
+        showLoadingIndicator(false);
+    }
+}
 
 // Display error message if API isn't loaded
 function displayErrorMessage() {
     const contentSections = document.querySelectorAll('.content-grid');
     contentSections.forEach(section => {
         section.innerHTML = '<div class="error-message">Failed to load content. Please refresh the page.</div>';
+    });
+}
+
+// Show/hide loading indicator
+function showLoadingIndicator(show) {
+    const loadingElement = document.getElementById('content-loading');
+    if (loadingElement) {
+        loadingElement.style.display = show ? 'block' : 'none';
+    }
+}
+
+// Show error message
+function showErrorMessage(message) {
+    const contentSections = document.querySelectorAll('.content-grid');
+    contentSections.forEach(section => {
+        section.innerHTML = `<div class="error-message">${message}</div>`;
     });
 }
 
@@ -97,12 +130,6 @@ function setupNavigation() {
 function loadAndDisplayPosts() {
     console.log("Loading posts for display");
     
-    // Show loading indicator if available
-    const loadingElement = document.getElementById('content-loading');
-    if (loadingElement) {
-        loadingElement.style.display = 'block';
-    }
-    
     // Get all posts from the API
     try {
         const allPosts = API.posts.getAllPosts();
@@ -134,11 +161,7 @@ function loadAndDisplayPosts() {
         }
     } catch (error) {
         console.error('Error loading posts:', error);
-    } finally {
-        // Hide loading indicator
-        if (loadingElement) {
-            loadingElement.style.display = 'none';
-        }
+        showErrorMessage('Failed to load content. Please refresh the page.');
     }
 }
 
@@ -162,7 +185,7 @@ function renderPostsToSection(sectionElement, posts) {
 // Create a post card element
 function createPostCard(post) {
     const card = document.createElement('div');
-    card.className = 'content-card';
+    card.className = `content-card ${post.contentType}`;
     card.setAttribute('data-id', post.id);
     
     // Format date
@@ -224,26 +247,30 @@ function displayFullPost(post) {
     });
     
     // Create modal content
-    const contentElement = document.getElementById('post-detail-content');
-    if (contentElement) {
-        contentElement.innerHTML = `
-            <header>
-                <span class="content-badge">${post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1)}</span>
-                <h1>${post.title}</h1>
-                <div class="post-meta">
-                    <span><i class="fas fa-calendar"></i> ${publishedDate}</span>
-                </div>
-            </header>
-            <div class="post-body">
-                ${formatPostContent(post.content)}
+    modal.innerHTML = `
+        <div class="modal-content large">
+            <div class="modal-header">
+                <button class="close-btn" onclick="closePostModal()">&times;</button>
             </div>
-            ${post.tags && post.tags.length > 0 ? `
-                <div class="post-tags">
-                    <strong>Tags:</strong> ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join(' ')}
+            <article class="post-content">
+                <header>
+                    <span class="content-badge">${post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1)}</span>
+                    <h1>${post.title}</h1>
+                    <div class="post-meta">
+                        <span><i class="fas fa-calendar"></i> ${publishedDate}</span>
+                    </div>
+                </header>
+                <div class="post-body">
+                    ${formatPostContent(post.content)}
                 </div>
-            ` : ''}
-        `;
-    }
+                ${post.tags && post.tags.length > 0 ? `
+                    <div class="post-tags">
+                        <strong>Tags:</strong> ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join(' ')}
+                    </div>
+                ` : ''}
+            </article>
+        </div>
+    `;
     
     // Show the modal
     modal.style.display = 'block';
