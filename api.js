@@ -14,9 +14,8 @@ const API = (function() {
     
     // Generate CSRF token for forms
     function generateCsrfToken() {
-        const token = Array.from(window.crypto.getRandomValues(new Uint8Array(32)))
-            .map(byte => byte.toString(16).padStart(2, '0'))
-            .join('');
+        const token = Math.random().toString(36).substring(2, 15) + 
+                    Math.random().toString(36).substring(2, 15);
         
         sessionStorage.setItem(STORAGE_KEYS.CSRF, token);
         return token;
@@ -53,7 +52,7 @@ const API = (function() {
                     // Validate credentials (would be done server-side in production)
                     if (
                         credentials.username === 'admin' && 
-                        credentials.password === 'kaalel'
+                        credentials.password === 'admin123'
                     ) {
                         // Create session (would be a secure HTTP-only cookie in production)
                         const session = {
@@ -76,7 +75,7 @@ const API = (function() {
                             error: 'Invalid username or password'
                         });
                     }
-                }, 500); // Simulate network delay
+                }, 300); // Simulate network delay
             });
         },
         
@@ -413,7 +412,7 @@ const API = (function() {
                 setTimeout(() => {
                     console.log('Email would be sent here:', messageData);
                     resolve({ success: true });
-                }, 1000);
+                }, 500);
             });
         }
     };
