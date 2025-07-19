@@ -10,12 +10,13 @@ class FlowingThreads {
     
     this.ctx = this.canvas.getContext('2d');
     this.particles = [];
-    this.particleCount = 60;
+    this.particleCount = 80; // Increased count for more threads
     this.mousePosition = { x: 0, y: 0 };
     this.lastMousePosition = { x: 0, y: 0 };
     this.mouseVelocity = { x: 0, y: 0 };
     this.isMouseMoving = false;
     this.mouseTimeout = null;
+    this.connectionDistance = 120; // Increased connection distance
     
     this.init();
   }
@@ -68,22 +69,24 @@ class FlowingThreads {
       this.particles.push({
         x: Math.random() * this.canvas.width,
         y: Math.random() * this.canvas.height,
-        size: Math.random() * 2 + 1,
-        speedX: Math.random() * 0.5 - 0.25,
-        speedY: Math.random() * 0.5 - 0.25,
-        color: `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`,
+        size: Math.random() * 1 + 0.5, // Smaller particles
+        speedX: Math.random() * 0.3 - 0.15,
+        speedY: Math.random() * 0.3 - 0.15,
+        color: `rgba(255, 255, 255, ${Math.random() * 0.4 + 0.1})`, // More transparent
         connections: []
       });
     }
   }
   
   animate() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // Clear with semi-transparent black for trail effect
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     
     // Update and draw particles
     this.updateParticles();
+    this.drawConnections(); // Draw connections first (behind particles)
     this.drawParticles();
-    this.drawConnections();
     
     requestAnimationFrame(() => this.animate());
   }
@@ -102,11 +105,11 @@ class FlowingThreads {
         const dy = this.mousePosition.y - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance < 100) {
+        if (distance < 120) {
           const angle = Math.atan2(dy, dx);
-          const force = (100 - distance) / 500;
-          particle.x += Math.cos(angle) * force * this.mouseVelocity.x * 0.2;
-          particle.y += Math.sin(angle) * force * this.mouseVelocity.y * 0.2;
+          const force = (120 - distance) / 500;
+          particle.x += Math.cos(angle) * force * this.mouseVelocity.x * 0.3;
+          particle.y += Math.sin(angle) * force * this.mouseVelocity.y * 0.3;
         }
       }
       
@@ -130,7 +133,7 @@ class FlowingThreads {
         const dy = particleA.y - particleB.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance < 100) {
+        if (distance < this.connectionDistance) {
           particleA.connections.push({
             particle: particleB,
             distance: distance
@@ -155,16 +158,14 @@ class FlowingThreads {
   }
   
   drawConnections() {
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    this.ctx.lineWidth = 0.5;
-    
     this.particles.forEach(particle => {
       particle.connections.forEach(connection => {
-        const opacity = 1 - connection.distance / 100;
+        const opacity = 1 - connection.distance / this.connectionDistance;
         this.ctx.beginPath();
         this.ctx.moveTo(particle.x, particle.y);
         this.ctx.lineTo(connection.particle.x, connection.particle.y);
         this.ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.2})`;
+        this.ctx.lineWidth = 0.5;
         this.ctx.stroke();
       });
     });
