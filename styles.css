@@ -1,3 +1,34 @@
+
+<style>
+    .content-thumbnail {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+    
+    .content-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .content-card:hover .content-thumbnail img {
+        transform: scale(1.05);
+    }
+    
+    .post-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--border-radius);
+        margin: 1rem 0;
+        box-shadow: var(--shadow);
+    }
+
+
+
+
 /* CSS Variables */
 :root {
     --primary-color: #3b82f6;
