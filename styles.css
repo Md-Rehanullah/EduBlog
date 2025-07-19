@@ -1014,3 +1014,14 @@ html {
         margin-top: 80px;
     }
 }
+
+
+/* Ensure spaces are properly displayed in text scrambling effect */
+.scramble-space {
+    display: inline-block;
+    width: 0.25em;
+}
+
+.scramble-letter {
+    display: inline-block;
+}
