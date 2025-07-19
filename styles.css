@@ -1015,3 +1015,32 @@ html {
     color: var(--text-secondary);
     font-style: italic;
 }
+
+
+/* View All Button Styles */
+.view-all-container {
+    margin-top: 2rem;
+    text-align: center;
+    width: 100%;
+}
+
+.view-all-container .btn {
+    font-size: 1rem;
+    padding: 0.8rem 2rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.view-all-container .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.view-all-container .fas {
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.view-all-container .btn:hover .fas {
+    transform: translateX(4px);
+}
+
