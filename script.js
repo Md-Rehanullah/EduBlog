@@ -91,12 +91,17 @@ As technology continues to evolve, we can expect to see:
         isPublished: true
     },
     {
-    id: 5,
+    id: 3,
     title: 'Vtvgvgv',
     contentType: 'blog',
     excerpt: 'y gvuygvuyfvvg',
-    content: `Gvvgvvtvtccexexwx`,
-    tags: [],
+    content: `Gvvgvvtvtccexexwx ijbjbibu
+    ![Ideal Study Space](https://images.unsplash.com/photo-1598004848598-22f410a6c180?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
+    ihhibbibhbbuibiubyuhbuhbuybihbihbuhbuhbuhbuhbhubuhbugvguvgauvaugvauh ushvu aug ush ug aug aug aug agu ug aug aug
+    aijnain uan uh auh auh uha uha uh auh ahbus hus uh suh uh suh suh u hss
+    sj is i hsi ish ih suhbsuh sin sih ish uhs uha uha ih sihus 
+    sm is ji sih sij sij iu shi shi sih sih sih sih sih sih sih ihs ih sih sih sih ihs`,
+    tags: ['Education'],
     publishedAt: '2025-07-19',
     isPublished: true
 }
