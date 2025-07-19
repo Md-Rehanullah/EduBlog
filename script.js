@@ -645,3 +645,71 @@ function checkForPostParam() {
         }
     }
 }
+
+
+
+
+
+// Add to your existing script.js file
+
+// Function to force sync with cloud on page load
+async function forceSyncWithCloud() {
+    try {
+        if (typeof API.syncWithCloud === 'function') {
+            const syncResult = await API.syncWithCloud();
+            if (syncResult) {
+                console.log("Successfully synchronized with cloud storage");
+            }
+        }
+    } catch (error) {
+        console.error("Error syncing with cloud:", error);
+    }
+}
+
+// Update your initializeWithCloudData function
+async function initializeWithCloudData() {
+    try {
+        // Show loading state if element exists
+        const loadingElement = document.getElementById('content-loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+        
+        // First sync with cloud
+        await forceSyncWithCloud();
+        
+        // Initialize app with data
+        await API.posts.initializeWithSampleData();
+        
+        // Set up app after data is loaded
+        initApp();
+        setupEventListeners();
+        updateAuthUI();
+        
+        // Load posts
+        loadPosts();
+        
+        // Check for post in URL
+        checkForPostParam();
+    } catch (error) {
+        console.error("Error initializing app with cloud data:", error);
+        
+        // Still try to show whatever we can
+        initApp();
+        setupEventListeners();
+        updateAuthUI();
+        loadPosts();
+    } finally {
+        // Hide loading indicator
+        const loadingElement = document.getElementById('content-loading');
+        if (loadingElement) {
+            loadingElement.style.display = 'none';
+        }
+    }
+}
+
+// Listen for data update events
+document.addEventListener('edublog-data-updated', function() {
+    console.log('Data updated from another source, refreshing content');
+    loadPosts();
+});
