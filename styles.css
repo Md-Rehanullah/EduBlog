@@ -1,3 +1,18 @@
+/* Text Animation Styles */
+.dud {
+  color: var(--primary-color);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.hero-title, .hero-subtitle, .hero-description {
+  min-height: 1em; /* Prevent layout shifts during animation */
+}
+
+
 /* Content thumbnails */
 .content-thumbnail {
     width: 100%;
