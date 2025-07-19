@@ -149,32 +149,33 @@ function createPostCard(post) {
     return card;
 }
 
-
-// Replace the existing navigation toggle event listener in setupEventListeners function
+// Set up event listeners
 function setupEventListeners() {
-    // Navigation toggle for mobile
+    // Navigation toggle for mobile - FIXED VERSION
     const navToggle = document.getElementById('nav-toggle');
     const navMenu = document.getElementById('nav-menu');
     
     if (navToggle && navMenu) {
+        console.log("Found navigation elements");
         navToggle.addEventListener('click', function(e) {
-            e.preventDefault(); // Prevent any default action
-            e.stopPropagation(); // Prevent event bubbling
-            console.log("Toggle clicked");
+            e.preventDefault();
+            console.log("Toggle button clicked");
             navMenu.classList.toggle('active');
             
-            // Add this to help with debugging
+            // Force display style to ensure it works
             if (navMenu.classList.contains('active')) {
-                console.log("Menu should now be visible");
-                navMenu.style.display = 'flex'; // Force display
+                navMenu.style.display = 'flex';
+                console.log("Navigation menu should be visible now");
             } else {
-                console.log("Menu should now be hidden");
+                navMenu.style.display = '';
+                console.log("Navigation menu should be hidden now");
             }
         });
+    } else {
+        console.error("Navigation elements not found!");
+        if (!navToggle) console.error("Nav toggle button missing");
+        if (!navMenu) console.error("Nav menu missing");
     }
-    
-    // Rest of your event listeners stay the same...
-}
     
     // Contact form submission
     const contactForm = document.getElementById('contact-form');
@@ -439,6 +440,17 @@ document.head.insertAdjacentHTML('beforeend', `
         border-radius: var(--border-radius);
         margin: 1rem 0;
         box-shadow: var(--shadow);
+    }
+    
+    /* Mobile navigation fix */
+    @media (max-width: 768px) {
+        .nav-menu.active {
+            display: flex !important;
+        }
+        
+        .page-header {
+            margin-top: 80px;
+        }
     }
 </style>
 `);
