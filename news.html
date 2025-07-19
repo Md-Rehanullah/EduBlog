@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Stories - EduBlog</title>
+    <title>Education News - EduBlog</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -19,8 +19,8 @@
                 <div class="nav-menu" id="nav-menu">
                     <a href="index.html" class="nav-link">Home</a>
                     <a href="blogs.html" class="nav-link">Blogs</a>
-                    <a href="stories.html" class="nav-link active">Stories</a>
-                    <a href="news.html" class="nav-link">News</a>
+                    <a href="stories.html" class="nav-link">Stories</a>
+                    <a href="news.html" class="nav-link active">News</a>
                     <a href="about.html" class="nav-link">About</a>
                     <a href="index.html#contact" class="nav-link">Contact</a>
                 </div>
@@ -35,21 +35,21 @@
     <!-- Page Header -->
     <section class="page-header">
         <div class="container">
-            <h1>Student Stories</h1>
-            <p>Real student journeys of overcoming challenges and achieving academic excellence</p>
+            <h1>Education News</h1>
+            <p>Latest updates on scholarships, educational opportunities, and academic developments</p>
         </div>
     </section>
 
     <!-- Content Section -->
     <section class="content-section">
         <div class="container">
-            <div class="content-grid" id="stories-full-grid">
-                <!-- Story posts will be loaded by JavaScript -->
+            <div class="content-grid" id="news-full-grid">
+                <!-- News posts will be loaded by JavaScript -->
             </div>
             
             <!-- Pagination -->
             <div class="pagination-container">
-                <div id="stories-pagination" class="pagination"></div>
+                <div id="news-pagination" class="pagination"></div>
             </div>
         </div>
     </section>
@@ -125,12 +125,13 @@
     <button id="scrollToTop" class="scroll-top-btn" aria-label="Scroll to top">
         <i class="fas fa-arrow-up"></i>
     </button>
-        <script src="postuploader.js"></script>
+
+    <script src="postuploader.js"></script>
     <script src="script.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Display all story posts with pagination
-            displayContentPage('story', 'stories-full-grid', 'stories-pagination');
+            // Display all news posts with pagination
+            displayContentPage('news', 'news-full-grid', 'news-pagination');
         });
     </script>
 </body>
