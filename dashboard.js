@@ -603,3 +603,52 @@ function showToast(message, type = 'success') {
         toast.classList.remove('show');
     }, 5000);
 }
+
+
+
+
+
+
+// Add to your existing dashboard.js file
+
+// Function to force sync with cloud on dashboard load
+async function forceSyncWithCloud() {
+    try {
+        if (typeof API.syncWithCloud === 'function') {
+            const syncResult = await API.syncWithCloud();
+            if (syncResult) {
+                console.log("Successfully synchronized with cloud storage");
+            }
+        }
+    } catch (error) {
+        console.error("Error syncing with cloud:", error);
+    }
+}
+
+// Add this to your loadDashboardData function
+async function loadDashboardData() {
+    console.log("Loading dashboard data");
+    
+    try {
+        // First try to sync with cloud
+        await forceSyncWithCloud();
+        
+        // Then load stats and posts
+        loadStats();
+        loadPosts();
+    } catch (error) {
+        console.error("Error loading dashboard data:", error);
+        showToast("Error syncing with cloud. Some data may not be up to date.", "warning");
+        
+        // Still try to load stats and posts from local storage
+        loadStats();
+        loadPosts();
+    }
+}
+
+// Listen for data update events
+document.addEventListener('edublog-data-updated', function() {
+    console.log('Data updated from another source, refreshing dashboard');
+    loadStats();
+    loadPosts();
+});
