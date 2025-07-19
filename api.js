@@ -141,7 +141,7 @@ const API = (function() {
             const samplePosts = [
                 {
                     id: 1,
-                    title: 'Effective Study Techniques for Remote Learning',
+                    title: 'Effectiv rehan bhai jinda baad',
                     contentType: 'blog',
                     excerpt: 'Discover science-backed study methods that can boost your productivity while learning from home.',
                     content: `# Effective Study Techniques for Remote Learning\n\n**Remote learning** has become a significant part of education worldwide. To make the most of it, consider these proven techniques:\n\n## 1. Create a Dedicated Study Space\n\nYour environment affects your focus. Set up a space that's:\n- Free from distractions\n- Comfortable but not too comfortable\n- Well-lit and well-ventilated\n\n## 2. Use the Pomodoro Technique\n\nWork in focused 25-minute intervals followed by 5-minute breaks. After four cycles, take a longer break of 15-30 minutes.\n\n## 3. Active Recall Practice\n\nDon't just read - test yourself! Close your notes and try to recall the information. This strengthens neural pathways and improves retention.`,
