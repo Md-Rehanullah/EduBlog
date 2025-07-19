@@ -178,14 +178,50 @@ function setupEventListeners() {
     }
     
     // Contact form submission
-    const contactForm = document.getElementById('contact-form');
+ const contactForm = document.getElementById('contact-form');
     if (contactForm) {
         contactForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            showToast('Message sent successfully! We\'ll get back to you soon.');
-            contactForm.reset();
+
+            // Gather form data
+            const formData = new FormData(contactForm);
+
+            // Optionally, validate fields here before sending (not included for brevity)
+
+            // Disable button to prevent multiple submissions
+            const submitBtn = contactForm.querySelector('[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            // Send data to Formspree via fetch API
+            fetch('https://formspree.io/f/xwpqpgbo', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    showToast('Message sent successfully! We\'ll get back to you soon.');
+                    contactForm.reset();
+                } else {
+                    return response.json().then(data => {
+                        if (data.errors && data.errors.length > 0) {
+                            showToast('Error: ' + data.errors[0].message, 'error');
+                        } else {
+                            showToast('Failed to send message. Please try again.', 'error');
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                showToast('Failed to send message. Please try again.', 'error');
+            })
+            .finally(() => {
+                if (submitBtn) submitBtn.disabled = false;
+            });
         });
-    }
+    }}
     
     // "Read More" buttons on posts
     document.addEventListener('click', function(e) {
