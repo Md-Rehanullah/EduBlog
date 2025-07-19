@@ -1,5 +1,5 @@
 /**
- * EduBlog API Module with Enhanced Cloud Storage Integration
+ * EduBlog API Module with Cloud Storage Integration and Sequential IDs
  */
 const API = (function() {
     // Constants
@@ -13,10 +13,6 @@ const API = (function() {
     
     // Check if CloudStorage is available
     const isCloudStorageAvailable = typeof CloudStorage !== 'undefined';
-    console.log(`CloudStorage module ${isCloudStorageAvailable ? 'found' : 'not found'}`);
-    
-    // Flag to track initialization status
-    let isInitialized = false;
     
     // Generate CSRF token for forms
     function generateCsrfToken() {
@@ -102,63 +98,41 @@ const API = (function() {
     };
 
     /**
-     * Content/posts methods with enhanced cloud sync
+     * Content/posts methods with cloud sync
      */
     const posts = {
         // Initialize with sample data if storage is empty
         initializeWithSampleData: async function() {
             console.log("Initializing posts data");
             
-            if (isInitialized) {
-                console.log("Already initialized, syncing with cloud...");
+            try {
+                // First try to load from cloud
                 if (isCloudStorageAvailable) {
-                    try {
-                        const cloudData = await CloudStorage.load();
-                        if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
-                            localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(cloudData));
-                            localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
-                        }
-                    } catch (error) {
-                        console.error("Error syncing with cloud:", error);
-                    }
-                }
-                return;
-            }
-            
-            // First, try to load from cloud if available
-            if (isCloudStorageAvailable) {
-                try {
                     const cloudData = await CloudStorage.load();
                     if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
                         console.log("Loading data from cloud storage, found", cloudData.length, "posts");
                         localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(cloudData));
                         localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
-                        isInitialized = true;
                         return;
                     }
-                } catch (error) {
-                    console.log("Could not load from cloud, checking local storage", error);
                 }
-            } else {
-                console.log("CloudStorage not available, using localStorage only");
+            } catch (error) {
+                console.log("Could not load from cloud, checking local storage", error);
             }
             
             // If no cloud data, check local storage
             const localData = this.getAllPosts();
             if (localData.length > 0) {
                 console.log("Using local data:", localData.length, "posts");
-                
-                // Try to save local data to cloud if available
-                if (isCloudStorageAvailable) {
-                    try {
+                try {
+                    // Try to save local data to cloud
+                    if (isCloudStorageAvailable) {
                         await CloudStorage.save(localData);
                         localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
-                    } catch (cloudError) {
-                        console.error("Failed to save local data to cloud:", cloudError);
                     }
+                } catch (cloudError) {
+                    console.error("Failed to save local data to cloud:", cloudError);
                 }
-                
-                isInitialized = true;
                 return;
             }
             
@@ -202,17 +176,15 @@ const API = (function() {
             
             localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(samplePosts));
             
-            if (isCloudStorageAvailable) {
-                try {
-                    // Save sample data to cloud
+            try {
+                // Save sample data to cloud
+                if (isCloudStorageAvailable) {
                     await CloudStorage.save(samplePosts);
                     localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
-                } catch (cloudError) {
-                    console.error("Failed to save sample data to cloud:", cloudError);
                 }
+            } catch (cloudError) {
+                console.error("Failed to save sample data to cloud:", cloudError);
             }
-            
-            isInitialized = true;
         },
         
         // Get all posts
@@ -223,6 +195,18 @@ const API = (function() {
                 console.error('Error reading posts from storage:', error);
                 return [];
             }
+        },
+        
+        // Get the next sequential ID
+        getNextId: function() {
+            const allPosts = this.getAllPosts();
+            if (allPosts.length === 0) {
+                return 1;
+            }
+            
+            // Find the maximum ID and add 1
+            const maxId = Math.max(...allPosts.map(post => post.id));
+            return maxId + 1;
         },
         
         // Get posts with pagination and filtering
@@ -293,7 +277,7 @@ const API = (function() {
             return allPosts.find(post => post.id === parseInt(id));
         },
         
-        // Create a new post with cloud sync
+        // Create a new post with cloud sync and sequential ID
         createPost: async function(postData) {
             if (!auth.isAuthenticated()) {
                 throw new Error('Authentication required');
@@ -315,38 +299,46 @@ const API = (function() {
             
             const allPosts = this.getAllPosts();
             
-            // Create new post object with a unique ID (timestamp + random)
+            // Get next sequential ID
+            const nextId = this.getNextId();
+            
+            // Format current date for publishedAt
+            const now = new Date();
+            const publishedAt = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const createdAt = now.toISOString(); // Full ISO timestamp
+            
+            // Create new post object with the exact structure you specified
             const newPost = {
-                id: Date.now() + Math.floor(Math.random() * 1000),
+                id: nextId,
                 title: sanitizedData.title,
                 contentType: sanitizedData.contentType,
                 excerpt: sanitizedData.excerpt,
                 content: sanitizedData.content,
                 tags: sanitizedData.tags,
                 imageUrl: sanitizedData.imageUrl || null,
-                publishedAt: new Date().toISOString().split('T')[0],
+                publishedAt: publishedAt,
                 isPublished: !!sanitizedData.isPublished,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                createdAt: createdAt,
+                updatedAt: createdAt
             };
             
-            // Add to posts array
+            // Add to posts array at the beginning (newest first)
             allPosts.unshift(newPost);
             
             // Save to localStorage immediately
             localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(allPosts));
             
-            // Try to save to cloud if available
-            if (isCloudStorageAvailable) {
-                try {
+            // Try to save to cloud storage
+            try {
+                if (isCloudStorageAvailable) {
+                    // Save to cloud storage
                     await CloudStorage.save(allPosts);
                     localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
                     console.log("Post created and saved to cloud");
-                } catch (error) {
-                    console.error("Failed to save new post to cloud:", error);
                 }
-            } else {
-                console.log("Cloud storage not available, post saved locally only");
+            } catch (error) {
+                console.error("Failed to save new post to cloud:", error);
+                // We'll continue using the local storage version
             }
             
             return newPost;
@@ -392,20 +384,17 @@ const API = (function() {
                 updatedAt: new Date().toISOString()
             };
             
-            // Save to localStorage immediately
             localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(allPosts));
             
-            // Try to save to cloud if available
-            if (isCloudStorageAvailable) {
-                try {
+            try {
+                if (isCloudStorageAvailable) {
+                    // Save to cloud storage
                     await CloudStorage.save(allPosts);
                     localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
                     console.log("Post updated and saved to cloud");
-                } catch (error) {
-                    console.error("Failed to save updated post to cloud:", error);
                 }
-            } else {
-                console.log("Cloud storage not available, post updated locally only");
+            } catch (error) {
+                console.error("Failed to save updated post to cloud:", error);
             }
             
             return allPosts[postIndex];
@@ -426,21 +415,17 @@ const API = (function() {
             
             // Remove post
             const deletedPost = allPosts.splice(postIndex, 1)[0];
-            
-            // Save to localStorage immediately
             localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(allPosts));
             
-            // Try to save to cloud if available
-            if (isCloudStorageAvailable) {
-                try {
+            try {
+                if (isCloudStorageAvailable) {
+                    // Save to cloud storage
                     await CloudStorage.save(allPosts);
                     localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
                     console.log("Post deleted and cloud updated");
-                } catch (error) {
-                    console.error("Failed to update cloud after deletion:", error);
                 }
-            } else {
-                console.log("Cloud storage not available, post deleted locally only");
+            } catch (error) {
+                console.error("Failed to update cloud after deletion:", error);
             }
             
             return deletedPost;
@@ -486,24 +471,67 @@ const API = (function() {
                 .replace(/javascript:/gi, 'blocked:');
         },
         
-        // Force refresh data from cloud
-        forceRefreshFromCloud: async function() {
-            if (isCloudStorageAvailable) {
-                try {
-                    const cloudData = await CloudStorage.load();
-                    if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
-                        console.log("Force refreshing from cloud, found", cloudData.length, "posts");
+        // Force sync with cloud to ensure all devices have latest data
+        syncWithCloud: async function() {
+            if (!isCloudStorageAvailable) {
+                console.log("Cloud storage not available, skipping sync");
+                return false;
+            }
+            
+            try {
+                // First try to get cloud data
+                const cloudData = await CloudStorage.load();
+                
+                if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
+                    // Compare cloud data with local data
+                    const localPosts = this.getAllPosts();
+                    
+                    // If local has more posts or different posts, merge them
+                    if (localPosts.length >= cloudData.length) {
+                        console.log("Local data may have newer posts, merging with cloud");
+                        
+                        // Combine posts, keeping the highest ID values
+                        const mergedPosts = [...localPosts];
+                        
+                        // Add any cloud posts not in local
+                        cloudData.forEach(cloudPost => {
+                            const exists = mergedPosts.some(localPost => 
+                                localPost.id === cloudPost.id
+                            );
+                            
+                            if (!exists) {
+                                mergedPosts.push(cloudPost);
+                            }
+                        });
+                        
+                        // Sort by ID to ensure consistency
+                        mergedPosts.sort((a, b) => b.id - a.id);
+                        
+                        // Save merged data both locally and to cloud
+                        localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(mergedPosts));
+                        await CloudStorage.save(mergedPosts);
+                        localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
+                        
+                        return true;
+                    } else {
+                        // Cloud has more or newer data, use it
                         localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(cloudData));
                         localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
+                        
                         return true;
                     }
-                } catch (error) {
-                    console.error("Error force refreshing from cloud:", error);
-                    throw error;
+                } else if (localPosts.length > 0) {
+                    // Cloud is empty but we have local data, push to cloud
+                    await CloudStorage.save(localPosts);
+                    localStorage.setItem(STORAGE_KEYS.LAST_SYNC, Date.now().toString());
+                    
+                    return true;
                 }
-            } else {
-                throw new Error("Cloud storage not available");
+            } catch (error) {
+                console.error("Error syncing with cloud:", error);
+                return false;
             }
+            
             return false;
         }
     };
@@ -554,17 +582,17 @@ const API = (function() {
         }
     };
     
-    // Listen for data update events from other tabs/windows
-    document.addEventListener('edublog-data-updated', function() {
-        console.log('Received data update notification, refreshing...');
-        posts.initializeWithSampleData().catch(err => {
-            console.error("Failed to sync after update notification:", err);
-        });
-    });
-    
     // Initialize data on module load
     posts.initializeWithSampleData().catch(err => {
         console.error("Failed to initialize posts:", err);
+    });
+    
+    // Listen for storage events (when another tab updates localStorage)
+    window.addEventListener('storage', function(e) {
+        if (e.key === STORAGE_KEYS.POSTS) {
+            console.log('Post data changed in another tab, refreshing');
+            document.dispatchEvent(new CustomEvent('edublog-data-updated'));
+        }
     });
     
     // Public API
@@ -574,8 +602,6 @@ const API = (function() {
         contact: contact,
         generateCsrfToken: generateCsrfToken,
         verifyCsrfToken: verifyCsrfToken,
-        refresh: async function() {
-            return posts.forceRefreshFromCloud();
-        }
+        syncWithCloud: posts.syncWithCloud.bind(posts)
     };
 })();
