@@ -1,3 +1,55 @@
+
+
+// Add this function to your script.js file if it's not already there
+function displayContentPage(contentType, containerId, paginationId) {
+    console.log(`Displaying ${contentType} content in ${containerId}`);
+    
+    // Get the correct posts array based on content type
+    let postsArray;
+    switch (contentType) {
+        case 'blog':
+            postsArray = blogPosts;
+            break;
+        case 'story':
+            postsArray = storyPosts;
+            break;
+        case 'news':
+            postsArray = newsPosts;
+            break;
+        default:
+            console.error('Invalid content type:', contentType);
+            return;
+    }
+    
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.error(`Container with ID "${containerId}" not found`);
+        return;
+    }
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    // Add debugging information
+    console.log(`Found ${postsArray ? postsArray.length : 0} ${contentType} posts`);
+    
+    // If no posts, show empty state
+    if (!postsArray || postsArray.length === 0) {
+        container.innerHTML = '<div class="empty-state">No content available yet.</div>';
+        return;
+    }
+    
+    // Display all posts
+    postsArray.forEach(post => {
+        if (post.isPublished) {
+            const card = createPostCard(post);
+            container.appendChild(card);
+        }
+    });
+}
+
+
+
 // Function to display content on dedicated pages with pagination
 function displayContentPage(contentType, containerId, paginationId) {
     console.log(`Displaying ${contentType} content in ${containerId}`);
