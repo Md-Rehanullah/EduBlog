@@ -149,26 +149,31 @@ function createPostCard(post) {
     return card;
 }
 
-// Replace the existing navigation toggle event listener in setupEventListeners() function
-// Navigation toggle for mobile
-const navToggle = document.getElementById('nav-toggle');
-const navMenu = document.getElementById('nav-menu');
 
-if (navToggle && navMenu) {
-    console.log("Navigation elements found");
-    navToggle.addEventListener('click', function(e) {
-        e.preventDefault(); // Prevent any default action
-        e.stopPropagation(); // Prevent event bubbling
-        console.log("Toggle clicked");
-        navMenu.classList.toggle('active');
-        
-        // Add this to help with debugging
-        if (navMenu.classList.contains('active')) {
-            console.log("Menu should now be visible");
-        } else {
-            console.log("Menu should now be hidden");
-        }
-    });
+// Replace the existing navigation toggle event listener in setupEventListeners function
+function setupEventListeners() {
+    // Navigation toggle for mobile
+    const navToggle = document.getElementById('nav-toggle');
+    const navMenu = document.getElementById('nav-menu');
+    
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent any default action
+            e.stopPropagation(); // Prevent event bubbling
+            console.log("Toggle clicked");
+            navMenu.classList.toggle('active');
+            
+            // Add this to help with debugging
+            if (navMenu.classList.contains('active')) {
+                console.log("Menu should now be visible");
+                navMenu.style.display = 'flex'; // Force display
+            } else {
+                console.log("Menu should now be hidden");
+            }
+        });
+    }
+    
+    // Rest of your event listeners stay the same...
 }
     
     // Contact form submission
