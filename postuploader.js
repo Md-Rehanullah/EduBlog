@@ -43,7 +43,7 @@ Don't just read - test yourself! Close your notes and try to recall the informat
         isPublished: true
     },
     {
-        id: 2,
+        id: 6,
         title: 'The Impact of Technology on Modern Education',
         contentType: 'blog',
         excerpt: 'Exploring how new technologies are transforming traditional classrooms and learning methods.',
@@ -82,7 +82,7 @@ As technology continues to evolve, we can expect to see:
         publishedAt: '2025-07-19',
         isPublished: true
     },
-    {
+   /* {
         id: 3,
         title: 'Vtvgvgv',
         contentType: 'blog',
@@ -96,7 +96,7 @@ As technology continues to evolve, we can expect to see:
         tags: ['Education'],
         publishedAt: '2025-07-19',
         isPublished: true
-    }
+    }*/
 ];
 
 // ========================
