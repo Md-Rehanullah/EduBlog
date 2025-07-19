@@ -17,7 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up all event listeners
     setupEventListeners();
     
-    
+    // Only call displayAllPosts() on the index page
+    const currentPage = window.location.pathname.split('/').pop();
+    if (currentPage === '' || currentPage === 'index.html') {
+        displayAllPosts();
+    }
 });
 
 // Function to display content on dedicated pages with pagination
