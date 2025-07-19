@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Stories - EduBlog</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="index.html"><h1>EduBlog</h1></a>
+                </div>
+                
+                <div class="nav-menu" id="nav-menu">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="blogs.html" class="nav-link">Blogs</a>
+                    <a href="stories.html" class="nav-link active">Stories</a>
+                    <a href="news.html" class="nav-link">News</a>
+                    <a href="about.html" class="nav-link">About</a>
+                    <a href="index.html#contact" class="nav-link">Contact</a>
+                </div>
+                
+               <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+               </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1>Student Stories</h1>
+            <p>Real student journeys of overcoming challenges and achieving academic excellence</p>
+        </div>
+    </section>
+
+    <!-- Content Section -->
+    <section class="content-section">
+        <div class="container">
+            <div class="content-grid" id="stories-full-grid">
+                <!-- Story posts will be loaded by JavaScript -->
+            </div>
+            
+            <!-- Pagination -->
+            <div class="pagination-container">
+                <div id="stories-pagination" class="pagination"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>EduBlog</h3>
+                    <p>Empowering students through educational content, inspiring stories, and academic guidance.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="blogs.html">Blogs</a></li>
+                        <li><a href="stories.html">Stories</a></li>
+                        <li><a href="news.html">News</a></li>
+                        <li><a href="about.html">About</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="terms-conditions.html">Terms & Conditions</a></li>
+                        <li><a href="sitemap.html">Sitemap</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 EduBlog. All rights reserved. Built with passion for education.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Post Detail Modal -->
+    <div id="post-detail-modal" class="modal" role="dialog" aria-labelledby="post-detail-title" aria-hidden="true">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2 id="post-detail-title">Post Details</h2>
+                <button type="button" class="close-btn" id="close-post-detail" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <article id="post-detail-content" class="post-content">
+                    <!-- Post content will be loaded here -->
+                </article>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <i id="toast-icon" class="fas fa-check-circle"></i>
+        <span id="toast-message">Success!</span>
+        <button class="toast-close" aria-label="Close">&times;</button>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button id="scrollToTop" class="scroll-top-btn" aria-label="Scroll to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Display all story posts with pagination
+            displayContentPage('story', 'stories-full-grid', 'stories-pagination');
+        });
+    </script>
+</body>
+</html>
