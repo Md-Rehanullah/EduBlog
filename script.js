@@ -17,8 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set up all event listeners
     setupEventListeners();
     
-    // Display all content
-    displayAllPosts();
+    
 });
 
 // Function to display content on dedicated pages with pagination
