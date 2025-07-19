@@ -1693,7 +1693,61 @@
         return html;
     }
     </script>
-
+    <script>
+    // Text scrambling animation with preserved spaces
+function initTextScramble() {
+    document.querySelectorAll('.scramble-text').forEach(element => {
+        const originalText = element.textContent;
+        
+        // Clear the element
+        element.textContent = '';
+        
+        // Split text into characters, but preserve spaces with special handling
+        [...originalText].forEach((char, index) => {
+            const span = document.createElement('span');
+            
+            // Special handling for spaces to preserve them
+            if (char === ' ') {
+                span.className = 'scramble-space';
+                span.innerHTML = '&nbsp;'; // Use non-breaking space
+                span.style.display = 'inline-block';
+                span.style.width = '0.25em'; // Give space a width
+            } else {
+                span.className = 'scramble-letter';
+                span.textContent = char;
+            }
+            
+            element.appendChild(span);
+        });
+        
+        // Animate each letter with a delay (but skip spaces)
+        const letters = element.querySelectorAll('.scramble-letter');
+        letters.forEach((letter, index) => {
+            setTimeout(() => {
+                const originalChar = letter.textContent;
+                
+                let iterations = 0;
+                const maxIterations = 10;
+                
+                const interval = setInterval(() => {
+                    // Random chars to display during scrambling
+                    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+                    
+                    if (iterations < maxIterations) {
+                        letter.textContent = chars[Math.floor(Math.random() * chars.length)];
+                        letter.classList.add('animated');
+                        iterations++;
+                    } else {
+                        letter.textContent = originalChar;
+                        letter.classList.remove('animated');
+                        clearInterval(interval);
+                    }
+                }, 50);
+            }, index * 100);
+        });
+    });
+}
+    </script>
     <!-- Load post data from existing file -->
     <script src="postuploader.js"></script>
 </body>
