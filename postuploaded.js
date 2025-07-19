@@ -98,30 +98,6 @@ As technology continues to evolve, we can expect to see:
         isPublished: true
     }
     // Add more blog posts here as needed
-    // Example of how to add a new blog post:
-    /*
-    {
-        id: 6, // Use the next available ID
-        title: 'Your New Blog Post Title',
-        contentType: 'blog',
-        excerpt: 'A brief summary of your post content',
-        content: `# Your Blog Post Title
-        
-        Your full post content goes here. You can use markdown formatting including:
-        
-        ## Subheadings
-        
-        - Bullet points
-        - Another point
-        
-        ![Image Description](https://example.com/image-url.jpg)
-        
-        **Bold text** and *italic text* are also supported.`,
-        tags: ['tag1', 'tag2', 'tag3'],
-        publishedAt: '2025-07-19', // Today's date
-        isPublished: true
-    }
-    */
 ];
 
 // ========================
@@ -160,27 +136,6 @@ Sometimes what looks like failure is just a mismatch between your learning style
         isPublished: true
     }
     // Add more stories here as needed
-    // Example of how to add a new story:
-    /*
-    {
-        id: 7, // Use the next available ID
-        title: 'Your New Story Title',
-        contentType: 'story',
-        excerpt: 'A brief summary of your story',
-        content: `# Your Story Title
-        
-        Your full story content goes here with markdown formatting.
-        
-        ## Key Section
-        
-        Story details with **important points** highlighted.
-        
-        ![Image Description](https://example.com/image-url.jpg)`,
-        tags: ['personal journey', 'education', 'success'],
-        publishedAt: '2025-07-19', // Today's date
-        isPublished: true
-    }
-    */
 ];
 
 // ========================
@@ -223,25 +178,4 @@ This initiative is part of a broader industry movement to address the diversity 
         isPublished: true
     }
     // Add more news posts here as needed
-    // Example of how to add a new news item:
-    /*
-    {
-        id: 8, // Use the next available ID
-        title: 'Your New News Item Title',
-        contentType: 'news',
-        excerpt: 'A brief summary of the news item',
-        content: `# Your News Item Title
-        
-        Full details of the news with markdown formatting.
-        
-        ## Important Section
-        
-        Key information about this news item.
-        
-        ![Image Description](https://example.com/image-url.jpg)`,
-        tags: ['news', 'education', 'announcement'],
-        publishedAt: '2025-07-19', // Today's date
-        isPublished: true
-    }
-    */
 ];
