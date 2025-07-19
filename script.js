@@ -35,15 +35,59 @@ Your environment affects your focus. Set up a space that's:
 - Comfortable but not too comfortable
 - Well-lit and well-ventilated
 
+![Ideal Study Space](https://images.unsplash.com/photo-1598004848598-22f410a6c180?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
+
 ## 2. Use the Pomodoro Technique
 
 Work in focused 25-minute intervals followed by 5-minute breaks. After four cycles, take a longer break of 15-30 minutes.
+
+![Pomodoro Timer](https://images.unsplash.com/photo-1516383740770-fbcc5ccbece0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
 
 ## 3. Active Recall Practice
 
 Don't just read - test yourself! Close your notes and try to recall the information. This strengthens neural pathways and improves retention.`,
         tags: ['study techniques', 'remote learning', 'productivity'],
         publishedAt: '2025-07-01',
+        isPublished: true
+    },
+    {
+        id: 4,
+        title: 'The Impact of Technology on Modern Education',
+        contentType: 'blog',
+        excerpt: 'Exploring how new technologies are transforming traditional classrooms and learning methods.',
+        content: `# The Impact of Technology on Modern Education
+
+*Posted on July 19, 2025*
+
+Technology is rapidly changing how education is delivered and experienced by students worldwide. From AI-powered learning assistants to virtual reality classrooms, the educational landscape is evolving faster than ever.
+
+![Technology in Classroom](https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
+
+## Key Educational Technologies
+
+### 1. Artificial Intelligence
+
+AI tools are now helping teachers identify learning gaps and provide personalized instruction to students based on their individual needs.
+
+### 2. Virtual Reality
+
+VR technology allows students to explore historical sites, conduct virtual science experiments, and experience immersive learning environments.
+
+![VR Education](https://images.unsplash.com/photo-1535223289827-42f1e9919769?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
+
+### 3. Learning Management Systems
+
+Modern LMS platforms help track student progress, facilitate online discussions, and enable remote assessment through various innovative methods.
+
+## The Future of EdTech
+
+As technology continues to evolve, we can expect to see:
+- More adaptive learning platforms that adjust to each student's pace
+- Increased use of gamification to boost student engagement
+- Greater accessibility for students with diverse learning needs
+- Hybrid learning models that blend the best of in-person and online education`,
+        tags: ['education technology', 'edtech', 'digital learning'],
+        publishedAt: '2025-07-19',
         isPublished: true
     }
     // Add more blog posts here as needed
@@ -65,6 +109,8 @@ const storyPosts = [
 
 In my freshman year, I was barely passing my classes. The transition from high school to university hit me hard. My study habits weren't working, and I felt overwhelmed by the workload.
 
+![Student Stress](https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
+
 ## The Turning Point
 
 After failing two midterms, I knew something had to change. I reached out to my university's academic support center and discovered I had an undiagnosed learning disability. With this new understanding, I could finally develop strategies that worked for me.
@@ -72,6 +118,8 @@ After failing two midterms, I knew something had to change. I reached out to my 
 ## The Transformation
 
 I began recording lectures, using text-to-speech software, and working with a study group. These accommodations made all the difference. By my junior year, I was making the Dean's List consistently.
+
+![Graduation Success](https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
 
 ## The Lesson
 
@@ -99,6 +147,8 @@ const newsPosts = [
 
 Tech giant InnovateCorp has announced a new $5 million scholarship program aimed at increasing diversity in STEM fields. The program will provide full tuition coverage and living stipends to 100 students from underrepresented backgrounds each year.
 
+![Scholarship Announcement](https://images.unsplash.com/photo-1523289333742-be1143f6b766?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
+
 ## Eligibility Criteria
 
 To qualify, students must:
@@ -110,6 +160,8 @@ To qualify, students must:
 ## Application Process
 
 Applications open next month and will be accepted until October 15th. Students must submit academic transcripts, two letters of recommendation, and a personal essay explaining their interest in STEM and career goals.
+
+![Students Studying](https://images.unsplash.com/photo-1517486808906-6ca8b3f8e1c1?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
 
 ## Industry Impact
 
@@ -168,7 +220,19 @@ function createPostCard(post) {
     
     const contentTypeLabel = post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1);
     
+    // Extract first image URL to use as thumbnail (if available)
+    let thumbnailHtml = '';
+    const imgMatch = post.content.match(/!\[.*?\]\((.*?)\)/);
+    if (imgMatch && imgMatch[1]) {
+        thumbnailHtml = `
+            <div class="content-thumbnail">
+                <img src="${imgMatch[1]}" alt="Post thumbnail" loading="lazy">
+            </div>
+        `;
+    }
+    
     card.innerHTML = `
+        ${thumbnailHtml}
         <div class="content-header">
             <div class="content-meta">
                 <span class="content-badge">${contentTypeLabel}</span>
@@ -377,11 +441,14 @@ function showToast(message, type = 'success') {
     }, 4000);
 }
 
-// Convert markdown to HTML
+// Convert markdown to HTML (with image support)
 function markdownToHtml(markdown) {
     if (!markdown) return '';
     
     let html = markdown;
+    
+    // Images (must come before links to avoid conflicts)
+    html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="post-image" loading="lazy">');
     
     // Headers
     html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
@@ -391,6 +458,9 @@ function markdownToHtml(markdown) {
     // Bold and italic
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Links
+    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
     
     // Lists
     html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
