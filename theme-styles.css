@@ -1,0 +1,137 @@
+/* Theme Variables */
+:root {
+  /* Light Theme (Default) */
+  --primary-color: #3b82f6;
+  --primary-dark: #2563eb;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --dark-color: #1f2937;
+  --light-color: #f8fafc;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+  --bg-color: #ffffff;
+  --hero-gradient-start: #667eea;
+  --hero-gradient-end: #764ba2;
+  --card-bg: #ffffff;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --card-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --header-bg: #ffffff;
+  --footer-bg: #1f2937;
+  --header-text: #1f2937;
+  
+  /* Animation Speed */
+  --transition: all 0.3s ease;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --primary-color: #60a5fa;
+  --primary-dark: #3b82f6;
+  --success-color: #34d399;
+  --warning-color: #fbbf24;
+  --danger-color: #f87171;
+  --dark-color: #111827;
+  --light-color: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --border-color: #374151;
+  --bg-color: #111827;
+  --hero-gradient-start: #0f172a;
+  --hero-gradient-end: #1e293b;
+  --card-bg: #1f2937;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.4);
+  --header-bg: #0f172a;
+  --footer-bg: #0f172a;
+  --header-text: #f9fafb;
+}
+
+/* Apply theme variables */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.header {
+  background-color: var(--header-bg);
+  color: var(--header-text);
+}
+
+.nav-brand h1 {
+  color: var(--primary-color);
+}
+
+.nav-link {
+  color: var(--text-primary);
+}
+
+.nav-toggle {
+  color: var(--text-primary);
+}
+
+.hero {
+  background: linear-gradient(135deg, var(--hero-gradient-start) 0%, var(--hero-gradient-end) 100%);
+  padding: 5rem 0 3rem; /* Reduced padding */
+  margin-top: 60px; /* Reduced margin */
+}
+
+.hero-title, .hero-subtitle, .hero-description {
+  color: #ffffff; /* Always white for better contrast */
+}
+
+.content-card, .featured-card, .contact-form, .modal-content, .stat-card, .value-card {
+  background-color: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.content-card:hover, .featured-card:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+.footer {
+  background-color: var(--footer-bg);
+}
+
+/* Background Canvas Styles */
+.background-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-color: #000; /* Black background */
+}
+
+/* Update hero content z-index to appear above the canvas */
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Theme Switcher */
+.theme-switcher {
+  display: flex;
+  align-items: center;
+  margin-left: 1rem;
+  cursor: pointer;
+  z-index: 1001;
+  position: relative;
+}
+
+.theme-switcher-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+}
+
+/* Fix for close button color */
+.close-btn {
+  color: var(--danger-color);
+}
