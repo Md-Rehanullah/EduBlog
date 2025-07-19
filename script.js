@@ -1,246 +1,160 @@
 /**
- * EduBlog Main Script - Fixed Version
+ * Simple EduBlog Script
+ * This script defines posts directly in the code.
+ * To add new posts, simply add them to the appropriate arrays below.
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("EduBlog main script initialized");
+    console.log("EduBlog simple script initialized");
     
-    // Check if API is available
-    if (typeof API === 'undefined') {
-        console.error("API module not found. Make sure api.js is loaded before script.js");
-        showErrorMessage("Failed to load core components. Please refresh the page or check your connection.");
-        return;
-    }
+    // Set up all event listeners
+    setupEventListeners();
     
-    // Check if CloudStorage is available
-    if (typeof CloudStorage === 'undefined') {
-        console.error("CloudStorage module not found. Make sure cloud-storage.js is loaded before api.js");
-        showErrorMessage("Failed to load cloud storage component. Posts may not persist across sessions.");
-    }
-    
-    // Initialize with data from cloud
-    initializeWithCloudData();
+    // Display all content
+    displayAllPosts();
 });
 
-// Show error message in content grids
-function showErrorMessage(message) {
-    document.querySelectorAll('.content-grid').forEach(grid => {
-        if (grid) {
-            grid.innerHTML = `<div class="error-message">${message}</div>`;
-        }
-    });
-    
-    const loadingElement = document.getElementById('content-loading');
-    if (loadingElement) {
-        loadingElement.style.display = 'none';
+// ========================
+// BLOG POSTS DATA
+// ========================
+// To add a new blog post, add a new object to this array
+const blogPosts = [
+    {
+        id: 1,
+        title: 'Effective Study Techniques for Remote Learning',
+        contentType: 'blog',
+        excerpt: 'Discover science-backed study methods that can boost your productivity while learning from home.',
+        content: `# Effective Study Techniques for Remote Learning
+
+**Remote learning** has become a significant part of education worldwide. To make the most of it, consider these proven techniques:
+
+## 1. Create a Dedicated Study Space
+
+Your environment affects your focus. Set up a space that's:
+- Free from distractions
+- Comfortable but not too comfortable
+- Well-lit and well-ventilated
+
+## 2. Use the Pomodoro Technique
+
+Work in focused 25-minute intervals followed by 5-minute breaks. After four cycles, take a longer break of 15-30 minutes.
+
+## 3. Active Recall Practice
+
+Don't just read - test yourself! Close your notes and try to recall the information. This strengthens neural pathways and improves retention.`,
+        tags: ['study techniques', 'remote learning', 'productivity'],
+        publishedAt: '2025-07-01',
+        isPublished: true
     }
+    // Add more blog posts here as needed
+];
+
+// ========================
+// STORIES DATA
+// ========================
+// To add a new story, add a new object to this array
+const storyPosts = [
+    {
+        id: 2,
+        title: 'From Failing Grades to University Honors',
+        contentType: 'story',
+        excerpt: 'How I transformed my academic performance through persistence and finding the right learning methods.',
+        content: `# From Failing Grades to University Honors
+
+## The Early Struggles
+
+In my freshman year, I was barely passing my classes. The transition from high school to university hit me hard. My study habits weren't working, and I felt overwhelmed by the workload.
+
+## The Turning Point
+
+After failing two midterms, I knew something had to change. I reached out to my university's academic support center and discovered I had an undiagnosed learning disability. With this new understanding, I could finally develop strategies that worked for me.
+
+## The Transformation
+
+I began recording lectures, using text-to-speech software, and working with a study group. These accommodations made all the difference. By my junior year, I was making the Dean's List consistently.
+
+## The Lesson
+
+Sometimes what looks like failure is just a mismatch between your learning style and traditional methods. Don't be afraid to seek help and try different approaches until you find what works for you.`,
+        tags: ['success story', 'perseverance', 'learning disabilities'],
+        publishedAt: '2025-07-05',
+        isPublished: true
+    }
+    // Add more stories here as needed
+];
+
+// ========================
+// NEWS POSTS DATA
+// ========================
+// To add a new news item, add a new object to this array
+const newsPosts = [
+    {
+        id: 3,
+        title: 'New Scholarship Program Launches for STEM Students',
+        contentType: 'news',
+        excerpt: 'A major tech company has announced a $5 million scholarship fund targeting underrepresented groups in STEM fields.',
+        content: `# New Scholarship Program Launches for STEM Students
+
+## Program Details
+
+Tech giant InnovateCorp has announced a new $5 million scholarship program aimed at increasing diversity in STEM fields. The program will provide full tuition coverage and living stipends to 100 students from underrepresented backgrounds each year.
+
+## Eligibility Criteria
+
+To qualify, students must:
+- Be pursuing degrees in Science, Technology, Engineering, or Mathematics
+- Demonstrate financial need
+- Maintain a GPA of 3.0 or higher
+- Be a member of an underrepresented group in STEM
+
+## Application Process
+
+Applications open next month and will be accepted until October 15th. Students must submit academic transcripts, two letters of recommendation, and a personal essay explaining their interest in STEM and career goals.
+
+## Industry Impact
+
+This initiative is part of a broader industry movement to address the diversity gap in technology fields. Similar programs have shown promising results in increasing graduation rates and career placement for participants.`,
+        tags: ['scholarships', 'STEM', 'education news'],
+        publishedAt: '2025-07-10',
+        isPublished: true
+    }
+    // Add more news posts here as needed
+];
+
+// Function to display all posts
+function displayAllPosts() {
+    // Display each category of posts
+    displayPosts('blogs-grid', blogPosts);
+    displayPosts('stories-grid', storyPosts);
+    displayPosts('news-grid', newsPosts);
 }
 
-// In your script.js file, update the initializeWithCloudData function:
-
-async function initializeWithCloudData() {
-    try {
-        // Show loading state
-        const loadingElement = document.getElementById('content-loading');
-        if (loadingElement) {
-            loadingElement.style.display = 'block';
-        }
-        
-        // Force refresh from cloud if possible
-        if (typeof API.refresh === 'function') {
-            try {
-                await API.refresh();
-                console.log("Successfully refreshed data from cloud");
-            } catch (refreshError) {
-                console.warn("Couldn't refresh from cloud:", refreshError);
-            }
-        }
-        
-        // Initialize app with data
-        await API.posts.initializeWithSampleData();
-        
-        // Set up app after data is loaded
-        initApp();
-        setupEventListeners();
-        updateAuthUI();
-        
-        // Load posts
-        loadPosts();
-        
-        // Check for post in URL
-        checkForPostParam();
-    } catch (error) {
-        console.error("Error initializing app with cloud data:", error);
-        
-        // Still try to show whatever we can
-        initApp();
-        setupEventListeners();
-        updateAuthUI();
-        loadPosts();
-    } finally {
-        // Hide loading indicator
-        const loadingElement = document.getElementById('content-loading');
-        if (loadingElement) {
-            loadingElement.style.display = 'none';
-        }
-    }
-}
-
-// Initialize the application
-function initApp() {
-    // Set CSRF tokens for forms if they exist
-    const csrfToken = API.generateCsrfToken();
-    document.querySelectorAll('input[name="csrf_token"]').forEach(input => {
-        input.value = csrfToken;
-    });
+// Display posts in their respective containers
+function displayPosts(containerId, posts) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
     
-    // Initialize the back to top button if it exists
-    initBackToTopButton();
-}
-
-// Setup event listeners
-function setupEventListeners() {
-    // Navigation toggle for mobile
-    const navToggle = document.getElementById('nav-toggle');
-    const navMenu = document.getElementById('nav-menu');
+    container.innerHTML = ''; // Clear container
     
-    if (navToggle && navMenu) {
-        navToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
-        });
-    }
-    
-    // Contact form submission
-    const contactForm = document.getElementById('contact-form');
-    if (contactForm) {
-        contactForm.addEventListener('submit', handleContactSubmit);
-    }
-    
-    // Close buttons for modals
-    document.querySelectorAll('.close-btn, .modal').forEach(element => {
-        element.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeAllModals();
-            }
-        });
-    });
-    
-    // Close toast notification
-    const toastClose = document.querySelector('.toast-close');
-    if (toastClose) {
-        toastClose.addEventListener('click', () => {
-            const toast = document.getElementById('toast');
-            if (toast) toast.classList.remove('show');
-        });
-    }
-    
-    // Smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]:not([href="#"])').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-                
-                history.pushState(null, '', this.getAttribute('href'));
-            }
-        });
-    });
-}
-
-// Load posts for different sections
-function loadPosts() {
-    console.log("Loading posts for display");
-    
-    try {
-        // Get all published posts from each category
-        const blogsData = API.posts.getPosts({
-            contentType: 'blog',
-            isPublished: true,
-            limit: 6
-        });
-        
-        const storiesData = API.posts.getPosts({
-            contentType: 'story',
-            isPublished: true,
-            limit: 6
-        });
-        
-        const newsData = API.posts.getPosts({
-            contentType: 'news',
-            isPublished: true,
-            limit: 6
-        });
-        
-        // Render each section if their container exists
-        const blogsGrid = document.getElementById('blogs-grid');
-        if (blogsGrid) {
-            renderPostsSection('blogs-grid', blogsData.posts, blogsData.pagination);
-        }
-        
-        const storiesGrid = document.getElementById('stories-grid');
-        if (storiesGrid) {
-            renderPostsSection('stories-grid', storiesData.posts, storiesData.pagination);
-        }
-        
-        const newsGrid = document.getElementById('news-grid');
-        if (newsGrid) {
-            renderPostsSection('news-grid', newsData.posts, newsData.pagination);
-        }
-    } catch (error) {
-        console.error('Error loading posts:', error);
-        showErrorMessage('Failed to load content. Please refresh the page.');
-    }
-}
-
-// Render posts in a specific section
-function renderPostsSection(sectionId, posts, pagination) {
-    const sectionElement = document.getElementById(sectionId);
-    if (!sectionElement) return;
-    
-    // Clear existing content
-    sectionElement.innerHTML = '';
-    
-    // Handle empty state
-    if (!posts || posts.length === 0) {
-        sectionElement.innerHTML = '<div class="empty-state">No content available yet.</div>';
+    if (posts.length === 0) {
+        container.innerHTML = '<div class="empty-state">No content available yet.</div>';
         return;
     }
     
-    // Create post cards
+    // Create post cards for each post
     posts.forEach(post => {
         const card = createPostCard(post);
-        sectionElement.appendChild(card);
+        container.appendChild(card);
     });
-    
-    // Render pagination if container exists
-    const paginationElement = document.getElementById(sectionId.replace('grid', 'pagination'));
-    if (paginationElement && pagination && pagination.totalPages > 1) {
-        renderPagination(paginationElement, pagination, (page) => {
-            const options = {
-                contentType: sectionId.includes('blog') ? 'blog' : 
-                             sectionId.includes('stories') ? 'story' : 'news',
-                isPublished: true,
-                page: page,
-                limit: 6
-            };
-            
-            const data = API.posts.getPosts(options);
-            renderPostsSection(sectionId, data.posts, data.pagination);
-        });
-    }
 }
 
-// Create a post card element
+// Create HTML for a post card
 function createPostCard(post) {
     const card = document.createElement('article');
     card.className = `content-card ${post.contentType}`;
     card.setAttribute('data-id', post.id);
     
-    // Format date safely
+    // Format date
     let publishedDate = 'Unknown date';
     try {
         publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
@@ -275,327 +189,154 @@ function createPostCard(post) {
         </div>
     `;
     
-    // Add click event to open post
-    card.querySelector('.read-more').addEventListener('click', function() {
-        openPostDetail(post.id);
-    });
-    
     return card;
 }
 
-// Render pagination controls
-function renderPagination(element, pagination, onPageChange) {
-    element.innerHTML = '';
+// Set up event listeners
+function setupEventListeners() {
+    // Navigation toggle for mobile
+    const navToggle = document.getElementById('nav-toggle');
+    const navMenu = document.getElementById('nav-menu');
     
-    if (!pagination || pagination.totalPages <= 1) return;
-    
-    const ul = document.createElement('ul');
-    ul.className = 'pagination-list';
-    
-    // Previous button
-    const prevLi = document.createElement('li');
-    const prevButton = document.createElement('button');
-    prevButton.innerHTML = '<i class="fas fa-chevron-left" aria-hidden="true"></i> Prev';
-    prevButton.className = 'pagination-link';
-    prevButton.disabled = pagination.page <= 1;
-    prevButton.setAttribute('aria-label', 'Previous page');
-    prevButton.addEventListener('click', () => onPageChange(pagination.page - 1));
-    prevLi.appendChild(prevButton);
-    ul.appendChild(prevLi);
-    
-    // Page numbers
-    const maxPages = Math.min(5, pagination.totalPages);
-    let startPage = Math.max(1, pagination.page - 2);
-    let endPage = Math.min(pagination.totalPages, startPage + maxPages - 1);
-    
-    // Adjust start page if we're near the end
-    if (endPage - startPage < maxPages - 1) {
-        startPage = Math.max(1, endPage - maxPages + 1);
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
     }
     
-    for (let i = startPage; i <= endPage; i++) {
-        const li = document.createElement('li');
-        const button = document.createElement('button');
-        button.textContent = i;
-        button.className = 'pagination-link' + (i === pagination.page ? ' active' : '');
-        button.setAttribute('aria-label', `Page ${i}`);
-        button.setAttribute('aria-current', i === pagination.page ? 'page' : 'false');
-        button.addEventListener('click', () => onPageChange(i));
-        li.appendChild(button);
-        ul.appendChild(li);
+    // Contact form submission
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            showToast('Message sent successfully! We\'ll get back to you soon.');
+            contactForm.reset();
+        });
     }
     
-    // Next button
-    const nextLi = document.createElement('li');
-    const nextButton = document.createElement('button');
-    nextButton.innerHTML = 'Next <i class="fas fa-chevron-right" aria-hidden="true"></i>';
-    nextButton.className = 'pagination-link';
-    nextButton.disabled = pagination.page >= pagination.totalPages;
-    nextButton.setAttribute('aria-label', 'Next page');
-    nextButton.addEventListener('click', () => onPageChange(pagination.page + 1));
-    nextLi.appendChild(nextButton);
-    ul.appendChild(nextLi);
+    // "Read More" buttons on posts
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('.read-more, .read-more *')) {
+            const button = e.target.closest('.read-more');
+            const postId = parseInt(button.getAttribute('data-id'));
+            openPostDetail(postId);
+        }
+    });
     
-    element.appendChild(ul);
+    // Close buttons for modals
+    document.querySelectorAll('.close-btn, .modal').forEach(element => {
+        element.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAllModals();
+            }
+        });
+    });
+    
+    // Close toast notification
+    const toastClose = document.querySelector('.toast-close');
+    if (toastClose) {
+        toastClose.addEventListener('click', () => {
+            const toast = document.getElementById('toast');
+            if (toast) toast.classList.remove('show');
+        });
+    }
+    
+    // Back to top button
+    const scrollToTopButton = document.getElementById('scrollToTop');
+    if (scrollToTopButton) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollToTopButton.classList.add('visible');
+            } else {
+                scrollToTopButton.classList.remove('visible');
+            }
+        });
+        
+        scrollToTopButton.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]:not([href="#"])').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
 }
 
 // Open post detail in modal
 function openPostDetail(postId) {
-    try {
-        const post = API.posts.getPostById(postId);
-        if (!post) {
-            showToast('Post not found', 'error');
-            return;
-        }
-        
-        const modal = document.getElementById('post-detail-modal');
-        const contentElement = document.getElementById('post-detail-content');
-        
-        if (!modal || !contentElement) {
-            console.error('Modal elements not found in the DOM');
-            return;
-        }
-        
-        // Format date
-        let publishedDate = 'Unknown date';
-        try {
-            publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        } catch (e) {
-            console.error('Error formatting date');
-        }
-        
-        // Convert content markdown to HTML
-        const contentHtml = markdownToHtml(post.content);
-        
-        // Update modal title
-        const titleElement = document.getElementById('post-detail-title');
-        if (titleElement) {
-            titleElement.textContent = post.title;
-        }
-        
-        // Set modal content
-        contentElement.innerHTML = `
-            <header class="post-header">
-                <span class="content-badge">${post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1)}</span>
-                <h1>${post.title}</h1>
-                <div class="post-meta">
-                    <span><i class="fas fa-calendar" aria-hidden="true"></i> ${publishedDate}</span>
-                    ${post.tags && post.tags.length > 0 ? `
-                        <div class="content-tags" aria-label="Tags">
-                            ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                        </div>
-                    ` : ''}
-                </div>
-            </header>
-            <div class="post-body">
-                ${contentHtml}
-            </div>
-        `;
-        
-        // Show modal
-        modal.classList.add('active');
-        
-        // Set up close button
-        const closeButton = document.getElementById('close-post-detail');
-        if (closeButton) {
-            // Remove existing event listeners to prevent duplicates
-            const newCloseButton = closeButton.cloneNode(true);
-            closeButton.parentNode.replaceChild(newCloseButton, closeButton);
-            
-            newCloseButton.addEventListener('click', () => {
-                modal.classList.remove('active');
-            });
-            
-            // Focus on close button for accessibility
-            newCloseButton.focus();
-        }
-        
-        // Close when clicking outside content
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
-        });
-    } catch (error) {
-        console.error('Error opening post detail:', error);
-        showToast('Failed to load post. Please try again.', 'error');
-    }
-}
-
-// Convert markdown to HTML
-function markdownToHtml(markdown) {
-    if (!markdown) return '';
+    // Find the post by ID from all post arrays
+    const post = findPostById(postId);
     
-    let html = markdown;
-    
-    try {
-        // Headers
-        html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-        html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-        html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-        
-        // Bold and italic
-        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
-        // Lists
-        html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
-        html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
-        html = html.replace(/^(\d+)\. (.*$)/gim, '<li>$2</li>');
-        
-        // Wrap lists
-        let inList = false;
-        let listType = '';
-        let listItems = [];
-        
-        // Process line by line for lists
-        const lines = html.split('\n');
-        const processedLines = [];
-        
-        for (const line of lines) {
-            if (line.match(/<li>/)) {
-                // Determine list type if starting a new list
-                if (!inList) {
-                    inList = true;
-                    // Check if it's an ordered list
-                    if (line.match(/^\d+\./)) {
-                        listType = 'ol';
-                    } else {
-                        listType = 'ul';
-                    }
-                }
-                listItems.push(line);
-            } else {
-                // End list if we were in one
-                if (inList) {
-                    processedLines.push(`<${listType}>${listItems.join('')}</${listType}>`);
-                    listItems = [];
-                    inList = false;
-                }
-                processedLines.push(line);
-            }
-        }
-        
-        // Handle case where document ends with a list
-        if (inList) {
-            processedLines.push(`<${listType}>${listItems.join('')}</${listType}>`);
-        }
-        
-        html = processedLines.join('\n');
-        
-        // Links
-        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-        
-        // Blockquotes
-        html = html.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
-        
-        // Line breaks and paragraphs
-        html = html.replace(/\n\n/g, '</p><p>');
-        
-        // Clean up empty paragraphs
-        html = html.replace(/<p><\/p>/g, '');
-        
-        // Wrap in paragraphs if not already wrapped
-        if (!html.match(/^<([a-z][a-z0-9]*)[^>]*>/i)) {
-            html = '<p>' + html + '</p>';
-        }
-    } catch (error) {
-        console.error('Error parsing markdown:', error);
-        return '<p>Error displaying content. Please try again later.</p>';
-    }
-    
-    return html;
-}
-
-// Handle contact form submission
-async function handleContactSubmit(e) {
-    e.preventDefault();
-    
-    // Check CSRF token if available
-    const tokenInput = document.getElementById('csrf-token');
-    if (tokenInput) {
-        const token = tokenInput.value;
-        if (!API.verifyCsrfToken(token)) {
-            showToast('Form validation failed. Please refresh the page and try again.', 'error');
-            return;
-        }
-    }
-    
-    const form = document.getElementById('contact-form');
-    if (!form) return;
-    
-    const formData = new FormData(form);
-    
-    // Prepare message data
-    const messageData = {
-        studentName: formData.get('studentName'),
-        studentEmail: formData.get('studentEmail'),
-        subject: formData.get('subject'),
-        relatedContent: formData.get('relatedContent'),
-        message: formData.get('message'),
-        newsletter: formData.get('newsletter') === 'on'
-    };
-    
-    try {
-        // Save message locally
-        API.contact.saveMessage(messageData);
-        
-        // Try to send email notification
-        await API.contact.sendMessageEmail(messageData);
-        
-        // Reset form and show success message
-        form.reset();
-        showToast('Message sent successfully! We\'ll get back to you within 24 hours.');
-    } catch (error) {
-        console.error('Error sending message:', error);
-        showToast('There was a problem sending your message. Please try again later.', 'error');
-    }
-}
-
-// Show toast notification
-function showToast(message, type = 'success') {
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toast-message');
-    const toastIcon = document.getElementById('toast-icon');
-    
-    if (!toast || !toastMessage || !toastIcon) {
-        console.error('Toast elements not found');
-        alert(message); // Fallback to alert if toast elements aren't available
+    if (!post) {
+        showToast('Post not found', 'error');
         return;
     }
     
-    toastMessage.textContent = message;
-    toast.className = `toast show ${type}`;
+    const modal = document.getElementById('post-detail-modal');
+    const contentElement = document.getElementById('post-detail-content');
+    const titleElement = document.getElementById('post-detail-title');
     
-    // Update icon based on type
-    if (type === 'error') {
-        toastIcon.className = 'fas fa-exclamation-circle';
-    } else if (type === 'warning') {
-        toastIcon.className = 'fas fa-exclamation-triangle';
-    } else if (type === 'info') {
-        toastIcon.className = 'fas fa-info-circle';
-    } else {
-        toastIcon.className = 'fas fa-check-circle';
+    if (!modal || !contentElement) return;
+    
+    // Format date
+    let publishedDate = 'Unknown date';
+    try {
+        publishedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    } catch (e) {
+        console.error('Error formatting date');
     }
     
-    // Auto hide after 4 seconds
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 4000);
+    // Set modal title
+    if (titleElement) {
+        titleElement.textContent = post.title;
+    }
+    
+    // Convert markdown content to HTML
+    const contentHtml = markdownToHtml(post.content);
+    
+    // Set modal content
+    contentElement.innerHTML = `
+        <header class="post-header">
+            <span class="content-badge">${post.contentType.charAt(0).toUpperCase() + post.contentType.slice(1)}</span>
+            <h1>${post.title}</h1>
+            <div class="post-meta">
+                <span><i class="fas fa-calendar" aria-hidden="true"></i> ${publishedDate}</span>
+                ${post.tags && post.tags.length > 0 ? `
+                    <div class="content-tags" aria-label="Tags">
+                        ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        </header>
+        <div class="post-body">
+            ${contentHtml}
+        </div>
+    `;
+    
+    // Show modal
+    modal.classList.add('active');
 }
 
-// Update UI based on authentication status
-function updateAuthUI() {
-    const isAuthenticated = API.auth.isAuthenticated();
-    const dashboardLink = document.getElementById('dashboard-link');
-    
-    if (dashboardLink) {
-        dashboardLink.classList.toggle('hidden', !isAuthenticated);
-    }
+// Find a post by ID from all post arrays
+function findPostById(id) {
+    return [...blogPosts, ...storyPosts, ...newsPosts].find(post => post.id === id);
 }
 
 // Close all open modals
@@ -605,111 +346,90 @@ function closeAllModals() {
     });
 }
 
-// Initialize back to top button
-function initBackToTopButton() {
-    const scrollToTopButton = document.getElementById('scrollToTop');
+// Show toast notification
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    const toastIcon = document.getElementById('toast-icon');
     
-    if (!scrollToTopButton) return;
+    if (!toast || !toastMessage || !toastIcon) {
+        alert(message); // Fallback if toast elements not found
+        return;
+    }
     
-    // Show/hide button based on scroll position
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 300) {
-            scrollToTopButton.classList.add('visible');
+    toastMessage.textContent = message;
+    
+    // Set toast type and icon
+    if (type === 'error') {
+        toast.className = 'toast show error';
+        toastIcon.className = 'fas fa-exclamation-circle';
+    } else if (type === 'warning') {
+        toast.className = 'toast show warning';
+        toastIcon.className = 'fas fa-exclamation-triangle';
+    } else {
+        toast.className = 'toast show';
+        toastIcon.className = 'fas fa-check-circle';
+    }
+    
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+}
+
+// Convert markdown to HTML
+function markdownToHtml(markdown) {
+    if (!markdown) return '';
+    
+    let html = markdown;
+    
+    // Headers
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    
+    // Bold and italic
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Lists
+    html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+    html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
+    
+    // Process line by line for lists
+    const lines = html.split('\n');
+    const processedLines = [];
+    let inList = false;
+    
+    for (const line of lines) {
+        if (line.match(/<li>/)) {
+            if (!inList) {
+                inList = true;
+                processedLines.push('<ul>');
+            }
+            processedLines.push(line);
         } else {
-            scrollToTopButton.classList.remove('visible');
-        }
-    });
-    
-    // Scroll to top when clicked
-    scrollToTopButton.addEventListener('click', () => {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    });
-}
-
-// Function to check for post query parameter in URL
-function checkForPostParam() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const postId = urlParams.get('post');
-    
-    if (postId) {
-        try {
-            const post = API.posts.getPostById(parseInt(postId));
-            if (post) {
-                openPostDetail(post.id);
+            if (inList) {
+                processedLines.push('</ul>');
+                inList = false;
             }
-        } catch (error) {
-            console.error('Error loading post from URL:', error);
+            processedLines.push(line);
         }
     }
-}
-
-
-
-
-
-// Add to your existing script.js file
-
-// Function to force sync with cloud on page load
-async function forceSyncWithCloud() {
-    try {
-        if (typeof API.syncWithCloud === 'function') {
-            const syncResult = await API.syncWithCloud();
-            if (syncResult) {
-                console.log("Successfully synchronized with cloud storage");
-            }
-        }
-    } catch (error) {
-        console.error("Error syncing with cloud:", error);
+    
+    if (inList) {
+        processedLines.push('</ul>');
     }
-}
-
-// Update your initializeWithCloudData function
-async function initializeWithCloudData() {
-    try {
-        // Show loading state if element exists
-        const loadingElement = document.getElementById('content-loading');
-        if (loadingElement) {
-            loadingElement.style.display = 'block';
-        }
-        
-        // First sync with cloud
-        await forceSyncWithCloud();
-        
-        // Initialize app with data
-        await API.posts.initializeWithSampleData();
-        
-        // Set up app after data is loaded
-        initApp();
-        setupEventListeners();
-        updateAuthUI();
-        
-        // Load posts
-        loadPosts();
-        
-        // Check for post in URL
-        checkForPostParam();
-    } catch (error) {
-        console.error("Error initializing app with cloud data:", error);
-        
-        // Still try to show whatever we can
-        initApp();
-        setupEventListeners();
-        updateAuthUI();
-        loadPosts();
-    } finally {
-        // Hide loading indicator
-        const loadingElement = document.getElementById('content-loading');
-        if (loadingElement) {
-            loadingElement.style.display = 'none';
-        }
+    
+    html = processedLines.join('\n');
+    
+    // Paragraphs
+    html = html.replace(/\n\n/g, '</p><p>');
+    
+    // Wrap in paragraphs if not already wrapped
+    if (!html.startsWith('<h1>') && !html.startsWith('<h2>') && !html.startsWith('<p>')) {
+        html = '<p>' + html + '</p>';
     }
+    
+    return html;
 }
-
-// Listen for data update events
-document.addEventListener('edublog-data-updated', function() {
-    console.log('Data updated from another source, refreshing content');
-    loadPosts();
-});
