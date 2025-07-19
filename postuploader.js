@@ -51,7 +51,7 @@ Don't just read - test yourself! Close your notes and try to recall the informat
 
 *Posted on July 19, 2025*
 
-Technology is rapidly changing how education is delivered and experienced by students worldwide. From AI-powered learning assistants to virtual reality classrooms, the educational landscape is evolving faster than ever.
+Technology is rapidly changing how education is delivered and experienced by students worldwide. From AI-powered learning assistants to virtual reality classrooms, the educational landscape is evolvin[...]
 
 ![Technology in Classroom](https://images.unsplash.com/photo-1509062522246-3755977927d7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
 
@@ -119,7 +119,7 @@ In my freshman year, I was barely passing my classes. The transition from high s
 
 ## The Turning Point
 
-After failing two midterms, I knew something had to change. I reached out to my university's academic support center and discovered I had an undiagnosed learning disability. With this new understanding, I could finally develop strategies that worked for me.
+After failing two midterms, I knew something had to change. I reached out to my university's academic support center and discovered I had an undiagnosed learning disability. With this new understandin[...]
 
 ## The Transformation
 
