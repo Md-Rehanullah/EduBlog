@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Editor - EduBlog</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Post editor specific styles */
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .editor-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .post-form {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+        
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 1rem;
+        }
+        
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: var(--light-color);
+            border: none;
+            cursor: pointer;
+            flex-grow: 1;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .tab-button.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .tab-button:first-child {
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+        }
+        
+        .tab-button:last-child {
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+        
+        .preview-container {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-top: 2rem;
+        }
+        
+        #preview-content {
+            margin-bottom: 2rem;
+        }
+        
+        .markdown-guide {
+            background: var(--light-color);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            font-size: 0.875rem;
+            margin-top: 2rem;
+        }
+        
+        .markdown-guide h4 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .code-output {
+            background: #2d2d2d;
+            color: #eee;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            overflow-x: auto;
+            font-family: monospace;
+            position: relative;
+        }
+        
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        
+        .copy-button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .success-message {
+            color: var(--success-color);
+            font-size: 0.75rem;
+            position: absolute;
+            right: 0.5rem;
+            top: 0.5rem;
+            background: rgba(0,0,0,0.7);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <a href="index.html"><h1>EduBlog</h1></a>
+                </div>
+                
+                <div class="nav-menu" id="nav-menu">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="about.html" class="nav-link">About</a>
+                    <a href="index.html#content" class="nav-link">Content</a>
+                    <a href="index.html#contact" class="nav-link">Contact</a>
+                </div>
+                
+                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-container">
+            <div class="editor-header">
+                <h1><i class="fas fa-edit"></i> Post Editor</h1>
+                <p>Create your blog post content and generate code to add to your website</p>
+            </div>
+
+            <div class="tab-buttons">
+                <button class="tab-button active" data-tab="edit">Edit Post</button>
+                <button class="tab-button" data-tab="preview">Preview</button>
+                <button class="tab-button" data-tab="code">Generate Code</button>
+            </div>
+
+            <!-- Editor Form -->
+            <div id="tab-edit" class="tab-content">
+                <form id="post-form" class="post-form">
+                    <div class="form-group">
+                        <label for="post-title">Title *</label>
+                        <input type="text" id="post-title" name="title" required maxlength="100">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="post-type">Content Type *</label>
+                            <select id="post-type" name="contentType" required>
+                                <option value="blog">Blog</option>
+                                <option value="story">Story</option>
+                                <option value="news">News</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="post-id">Post ID *</label>
+                            <input type="number" id="post-id" name="id" required min="1" value="5">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="post-excerpt">Excerpt * (Brief summary)</label>
+                        <textarea id="post-excerpt" name="excerpt" rows="2" required maxlength="200"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="post-content">Content * (Markdown format)</label>
+                        <textarea id="post-content" name="content" rows="15" required></textarea>
+                    </div>
+                    
+                    <div class="markdown-guide">
+                        <h4>Markdown Guide:</h4>
+                        <p><code># Heading 1</code>, <code>## Heading 2</code>, <code>**bold**</code>, <code>*italic*</code>, <code>- list item</code></p>
+                        <p>For images: <code>![Alt text](https://example.com/image.jpg)</code></p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="post-tags">Tags (comma-separated)</label>
+                        <input type="text" id="post-tags" name="tags" placeholder="e.g., education, study tips, technology">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="post-date">Publish Date</label>
+                            <input type="date" id="post-date" name="publishedAt">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="post-username">Author</label>
+                            <input type="text" id="post-username" name="username">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="post-published" name="published" checked>
+                            <span class="checkmark"></span>
+                            Publish immediately
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" id="reset-form-btn" class="btn btn-outline">Reset</button>
+                        <button type="submit" id="preview-btn" class="btn btn-primary">Preview Post</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Preview Tab -->
+            <div id="tab-preview" class="tab-content preview-container" style="display: none;">
+                <h2>Post Preview</h2>
+                <div id="preview-content" class="post-content">
+                    <!-- Preview content will be displayed here -->
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="back-to-edit" class="btn btn-outline">Back to Edit</button>
+                    <button type="button" id="generate-code-btn" class="btn btn-primary">Generate Code</button>
+                </div>
+            </div>
+
+            <!-- Code Output Tab -->
+            <div id="tab-code" class="tab-content" style="display: none;">
+                <div class="preview-container">
+                    <h2>Generated Code</h2>
+                    <p>Copy this code and paste it into your <code>simple-script.js</code> file's appropriate array (blogPosts, storyPosts, or newsPosts):</p>
+                    
+                    <div class="code-output" id="code-output">
+                        <!-- Generated code will be displayed here -->
+                        <button class="copy-button" id="copy-code">Copy to Clipboard</button>
+                        <span class="success-message" id="copy-success">Copied!</span>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" id="back-to-preview" class="btn btn-outline">Back to Preview</button>
+                        <button type="button" id="create-new-post" class="btn btn-primary">Create New Post</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>EduBlog</h3>
+                    <p>Empowering students through educational content, inspiring stories, and academic guidance.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="index.html#content">Content</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="index.html#contact">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="privacy-policy.html">Privacy Policy</a></li>
+                        <li><a href="terms-conditions.html">Terms & Conditions</a></li>
+                        <li><a href="sitemap.html">Sitemap</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Connect</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 EduBlog. All rights reserved. Built with passion for education.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <i id="toast-icon" class="fas fa-check-circle"></i>
+        <span id="toast-message">Success!</span>
+        <button class="toast-close" aria-label="Close">&times;</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date and username
+            const today = new Date('2025-07-19');
+            document.getElementById('post-date').valueAsDate = today;
+            document.getElementById('post-username').value = 'Md-Rehanullah';
+            
+            // Tab switching
+            const tabButtons = document.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Hide all tab content
+                    const tabContents = document.querySelectorAll('.tab-content');
+                    tabContents.forEach(tab => tab.style.display = 'none');
+                    
+                    // Show the selected tab content
+                    const tabId = 'tab-' + this.getAttribute('data-tab');
+                    document.getElementById(tabId).style.display = 'block';
+                });
+            });
+            
+            // Navigation toggle for mobile
+            const navToggle = document.getElementById('nav-toggle');
+            const navMenu = document.getElementById('nav-menu');
+            if (navToggle && navMenu) {
+                navToggle.addEventListener('click', () => {
+                    navMenu.classList.toggle('active');
+                });
+            }
+            
+            // Form submission for preview
+            const postForm = document.getElementById('post-form');
+            postForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Switch to preview tab
+                document.querySelector('.tab-button[data-tab="preview"]').click();
+                
+                // Generate preview
+                renderPreview();
+            });
+            
+            // Reset form button
+            const resetBtn = document.getElementById('reset-form-btn');
+            resetBtn.addEventListener('click', function() {
+                postForm.reset();
+                // Reset the date and username
+                document.getElementById('post-date').valueAsDate = today;
+                document.getElementById('post-username').value = 'Md-Rehanullah';
+            });
+            
+            // Back to edit button
+            document.getElementById('back-to-edit').addEventListener('click', function() {
+                document.querySelector('.tab-button[data-tab="edit"]').click();
+            });
+            
+            // Generate code button
+            document.getElementById('generate-code-btn').addEventListener('click', function() {
+                document.querySelector('.tab-button[data-tab="code"]').click();
+                generateCode();
+            });
+            
+            // Back to preview button
+            document.getElementById('back-to-preview').addEventListener('click', function() {
+                document.querySelector('.tab-button[data-tab="preview"]').click();
+            });
+            
+            // Create new post button
+            document.getElementById('create-new-post').addEventListener('click', function() {
+                postForm.reset();
+                document.getElementById('post-date').valueAsDate = today;
+                document.getElementById('post-username').value = 'Md-Rehanullah';
+                document.querySelector('.tab-button[data-tab="edit"]').click();
+            });
+            
+            // Copy to clipboard button
+            document.getElementById('copy-code').addEventListener('click', function() {
+                const codeOutput = document.getElementById('code-output').innerText.split('Copy to Clipboard')[0];
+                
+                navigator.clipboard.writeText(codeOutput).then(() => {
+                    const successMsg = document.getElementById('copy-success');
+                    successMsg.classList.add('show');
+                    setTimeout(() => {
+                        successMsg.classList.remove('show');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            });
+            
+            // Close toast notification
+            const toastClose = document.querySelector('.toast-close');
+            if (toastClose) {
+                toastClose.addEventListener('click', () => {
+                    const toast = document.getElementById('toast');
+                    if (toast) toast.classList.remove('show');
+                });
+            }
+            
+            // Function to render preview
+            function renderPreview() {
+                const previewContent = document.getElementById('preview-content');
+                const formData = new FormData(postForm);
+                
+                // Get form values
+                const title = formData.get('title');
+                const content = formData.get('content');
+                const contentType = formData.get('contentType');
+                const tags = formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()) : [];
+                const publishedAt = formData.get('publishedAt') || new Date().toISOString().split('T')[0];
+                
+                // Format date
+                let publishedDate = 'Unknown date';
+                try {
+                    publishedDate = new Date(publishedAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                } catch (e) {
+                    console.error('Error formatting date');
+                }
+                
+                // Convert markdown to HTML (basic implementation)
+                const contentHtml = markdownToHtml(content);
+                
+                // Set preview content
+                previewContent.innerHTML = `
+                    <header class="post-header">
+                        <span class="content-badge">${contentType.charAt(0).toUpperCase() + contentType.slice(1)}</span>
+                        <h1>${title}</h1>
+                        <div class="post-meta">
+                            <span><i class="fas fa-calendar" aria-hidden="true"></i> ${publishedDate}</span>
+                            ${tags.length > 0 ? `
+                                <div class="content-tags" aria-label="Tags">
+                                    ${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </header>
+                    <div class="post-body">
+                        ${contentHtml}
+                    </div>
+                `;
+            }
+            
+            // Function to generate code
+            function generateCode() {
+                const codeOutput = document.getElementById('code-output');
+                const formData = new FormData(postForm);
+                
+                // Get form values
+                const id = parseInt(formData.get('id'));
+                const title = formData.get('title');
+                const contentType = formData.get('contentType');
+                const excerpt = formData.get('excerpt');
+                const content = formData.get('content');
+                const tags = formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()) : [];
+                const publishedAt = formData.get('publishedAt') || new Date().toISOString().split('T')[0];
+                const isPublished = formData.get('published') === 'on';
+                
+                // Generate JavaScript code
+                const codeSnippet = `{
+    id: ${id},
+    title: '${escapeString(title)}',
+    contentType: '${contentType}',
+    excerpt: '${escapeString(excerpt)}',
+    content: \`${escapeBackticks(content)}\`,
+    tags: [${tags.map(tag => `'${escapeString(tag)}'`).join(', ')}],
+    publishedAt: '${publishedAt}',
+    isPublished: ${isPublished}
+}`;
+
+                // Set code output (excluding the button element's text)
+                codeOutput.innerHTML = codeSnippet + `
+                    <button class="copy-button" id="copy-code">Copy to Clipboard</button>
+                    <span class="success-message" id="copy-success">Copied!</span>
+                `;
+                
+                // Re-attach event listener for copy button
+                document.getElementById('copy-code').addEventListener('click', function() {
+                    navigator.clipboard.writeText(codeSnippet).then(() => {
+                        const successMsg = document.getElementById('copy-success');
+                        successMsg.classList.add('show');
+                        setTimeout(() => {
+                            successMsg.classList.remove('show');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                    });
+                });
+            }
+            
+            // Function to escape string for JavaScript
+            function escapeString(str) {
+                if (!str) return '';
+                return str
+                    .replace(/\\/g, '\\\\')
+                    .replace(/'/g, "\\'")
+                    .replace(/\r?\n/g, ' ');
+            }
+            
+            // Function to escape backticks in template literals
+            function escapeBackticks(str) {
+                if (!str) return '';
+                return str.replace(/`/g, '\\`');
+            }
+            
+            // Convert markdown to HTML (basic implementation)
+            function markdownToHtml(markdown) {
+                if (!markdown) return '';
+                
+                let html = markdown;
+                
+                // Images (must come before links)
+                html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="post-image">');
+                
+                // Headers
+                html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+                html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+                html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+                
+                // Bold and italic
+                html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                
+                // Links
+                html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+                
+                // Lists
+                html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
+                html = html.replace(/^\- (.*$)/gim, '<li>$1</li>');
+                
+                // Process line by line for lists
+                const lines = html.split('\n');
+                const processedLines = [];
+                let inList = false;
+                
+                for (const line of lines) {
+                    if (line.match(/<li>/)) {
+                        if (!inList) {
+                            inList = true;
+                            processedLines.push('<ul>');
+                        }
+                        processedLines.push(line);
+                    } else {
+                        if (inList) {
+                            processedLines.push('</ul>');
+                            inList = false;
+                        }
+                        processedLines.push(line);
+                    }
+                }
+                
+                if (inList) {
+                    processedLines.push('</ul>');
+                }
+                
+                html = processedLines.join('\n');
+                
+                // Paragraphs
+                html = html.replace(/\n\n/g, '</p><p>');
+                
+                // Wrap in paragraphs if not already wrapped
+                if (!html.startsWith('<h1>') && !html.startsWith('<h2>') && !html.startsWith('<p>')) {
+                    html = '<p>' + html + '</p>';
+                }
+                
+                return html;
+            }
+            
+            // Show toast notification
+            function showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                const toastMessage = document.getElementById('toast-message');
+                const toastIcon = document.getElementById('toast-icon');
+                
+                if (!toast || !toastMessage || !toastIcon) {
+                    alert(message); // Fallback
+                    return;
+                }
+                
+                toastMessage.textContent = message;
+                
+                // Set toast type and icon
+                if (type === 'error') {
+                    toast.className = 'toast show error';
+                    toastIcon.className = 'fas fa-exclamation-circle';
+                } else if (type === 'warning') {
+                    toast.className = 'toast show warning';
+                    toastIcon.className = 'fas fa-exclamation-triangle';
+                } else {
+                    toast.className = 'toast show';
+                    toastIcon.className = 'fas fa-check-circle';
+                }
+                
+                // Auto-hide after 4 seconds
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 4000);
+            }
+        });
+    </script>
+</body>
+</html>
