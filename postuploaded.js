@@ -97,7 +97,6 @@ As technology continues to evolve, we can expect to see:
         publishedAt: '2025-07-19',
         isPublished: true
     }
-    // Add more blog posts here as needed
 ];
 
 // ========================
@@ -135,7 +134,6 @@ Sometimes what looks like failure is just a mismatch between your learning style
         publishedAt: '2025-07-05',
         isPublished: true
     }
-    // Add more stories here as needed
 ];
 
 // ========================
@@ -177,5 +175,4 @@ This initiative is part of a broader industry movement to address the diversity 
         publishedAt: '2025-07-10',
         isPublished: true
     }
-    // Add more news posts here as needed
 ];
