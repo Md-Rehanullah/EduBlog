@@ -1,54 +1,25 @@
+/**
+ * Simple EduBlog Script
+ * This script uses post data from postuploader.js
+ */
 
+// Debug logging
+console.log('Script.js loading...');
 
-// Add this function to your script.js file if it's not already there
-function displayContentPage(contentType, containerId, paginationId) {
-    console.log(`Displaying ${contentType} content in ${containerId}`);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("EduBlog simple script initialized");
     
-    // Get the correct posts array based on content type
-    let postsArray;
-    switch (contentType) {
-        case 'blog':
-            postsArray = blogPosts;
-            break;
-        case 'story':
-            postsArray = storyPosts;
-            break;
-        case 'news':
-            postsArray = newsPosts;
-            break;
-        default:
-            console.error('Invalid content type:', contentType);
-            return;
-    }
+    // Check if post arrays are available
+    console.log('Blog posts available:', typeof blogPosts !== 'undefined', blogPosts ? blogPosts.length : 0);
+    console.log('Story posts available:', typeof storyPosts !== 'undefined', storyPosts ? storyPosts.length : 0);
+    console.log('News posts available:', typeof newsPosts !== 'undefined', newsPosts ? newsPosts.length : 0);
     
-    const container = document.getElementById(containerId);
-    if (!container) {
-        console.error(`Container with ID "${containerId}" not found`);
-        return;
-    }
+    // Set up all event listeners
+    setupEventListeners();
     
-    // Clear container
-    container.innerHTML = '';
-    
-    // Add debugging information
-    console.log(`Found ${postsArray ? postsArray.length : 0} ${contentType} posts`);
-    
-    // If no posts, show empty state
-    if (!postsArray || postsArray.length === 0) {
-        container.innerHTML = '<div class="empty-state">No content available yet.</div>';
-        return;
-    }
-    
-    // Display all posts
-    postsArray.forEach(post => {
-        if (post.isPublished) {
-            const card = createPostCard(post);
-            container.appendChild(card);
-        }
-    });
-}
-
-
+    // Display all content
+    displayAllPosts();
+});
 
 // Function to display content on dedicated pages with pagination
 function displayContentPage(contentType, containerId, paginationId) {
@@ -80,8 +51,8 @@ function displayContentPage(contentType, containerId, paginationId) {
     // Clear container
     container.innerHTML = '';
     
-    // If no posts, show empty state
-    if (postsArray.length === 0) {
+    // If no posts or posts array undefined
+    if (!postsArray || postsArray.length === 0) {
         container.innerHTML = '<div class="empty-state">No content available yet.</div>';
         return;
     }
@@ -95,77 +66,7 @@ function displayContentPage(contentType, containerId, paginationId) {
     });
 }
 
-// Add this CSS for thumbnails if not already present
-document.head.insertAdjacentHTML('beforeend', `
-<style>
-    .content-thumbnail {
-        width: 100%;
-        height: 200px;
-        overflow: hidden;
-        border-radius: var(--border-radius) var(--border-radius) 0 0;
-    }
-    
-    .content-thumbnail img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.3s ease;
-    }
-    
-    .content-card:hover .content-thumbnail img {
-        transform: scale(1.05);
-    }
-    
-    .post-image {
-        max-width: 100%;
-        height: auto;
-        border-radius: var(--border-radius);
-        margin: 1rem 0;
-        box-shadow: var(--shadow);
-    }
-</style>
-`);
-
-// Remove the existing blog posts, story posts, and news posts arrays
-// from script.js as they will now be loaded from postuploader.js
-
-/**
- * Simple EduBlog Script
- * This script uses post data from postuploader.js
- */
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("EduBlog simple script initialized");
-    
-    // Set up all event listeners
-    setupEventListeners();
-    
-    // Display all content
-    displayAllPosts();
-});
-
-// Note: The blog posts, story posts, and news posts arrays 
-// are now defined in postuploader.js and loaded before this script
-
-
-
-/**
- * Simple EduBlog Script
- * This script defines posts directly in the code.
- * To add new posts, simply add them to the appropriate arrays below.
- */
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("EduBlog simple script initialized");
-    
-    // Set up all event listeners
-    setupEventListeners();
-    
-    // Display all content
-    displayAllPosts();
-});
-
-// Function to display all posts
+// Function to display all posts on the index page
 function displayAllPosts() {
     // Display each category of posts
     displayPosts('blogs-grid', blogPosts);
@@ -180,7 +81,7 @@ function displayPosts(containerId, posts) {
     
     container.innerHTML = ''; // Clear container
     
-    if (posts.length === 0) {
+    if (!posts || posts.length === 0) {
         container.innerHTML = '<div class="empty-state">No content available yet.</div>';
         return;
     }
@@ -495,3 +396,34 @@ function markdownToHtml(markdown) {
     
     return html;
 }
+
+// Add this CSS for thumbnails
+document.head.insertAdjacentHTML('beforeend', `
+<style>
+    .content-thumbnail {
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+    }
+    
+    .content-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .content-card:hover .content-thumbnail img {
+        transform: scale(1.05);
+    }
+    
+    .post-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--border-radius);
+        margin: 1rem 0;
+        box-shadow: var(--shadow);
+    }
+</style>
+`);
