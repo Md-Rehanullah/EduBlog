@@ -81,7 +81,7 @@ As technology continues to evolve, we can expect to see:
         tags: ['education technology', 'edtech', 'digital learning'],
         publishedAt: '2025-07-19',
         isPublished: true
-    },
+    }
    /* {
         id: 3,
         title: 'Vtvgvgv',
