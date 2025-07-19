@@ -51,7 +51,7 @@ Don't just read - test yourself! Close your notes and try to recall the informat
         isPublished: true
     },
     {
-        id: 4,
+        id: 2,
         title: 'The Impact of Technology on Modern Education',
         contentType: 'blog',
         excerpt: 'Exploring how new technologies are transforming traditional classrooms and learning methods.',
@@ -91,7 +91,7 @@ As technology continues to evolve, we can expect to see:
         isPublished: true
     }
     ,{
-    id: 5,
+    id: 3,
     title: 'vgggg',
     contentType: 'blog',
     excerpt: 'Vvffgg',
@@ -110,7 +110,7 @@ As technology continues to evolve, we can expect to see:
 // To add a new story, add a new object to this array
 const storyPosts = [
     {
-        id: 2,
+        id: 4,
         title: 'From Failing Grades to University Honors',
         contentType: 'story',
         excerpt: 'How I transformed my academic performance through persistence and finding the right learning methods.',
@@ -148,7 +148,7 @@ Sometimes what looks like failure is just a mismatch between your learning style
 // To add a new news item, add a new object to this array
 const newsPosts = [
     {
-        id: 3,
+        id: 5,
         title: 'New Scholarship Program Launches for STEM Students',
         contentType: 'news',
         excerpt: 'A major tech company has announced a $5 million scholarship fund targeting underrepresented groups in STEM fields.',
