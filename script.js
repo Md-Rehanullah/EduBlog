@@ -90,8 +90,7 @@ As technology continues to evolve, we can expect to see:
         publishedAt: '2025-07-19',
         isPublished: true
     }
-
-    {
+    ,{
     id: 5,
     title: 'vgggg',
     contentType: 'blog',
@@ -101,6 +100,7 @@ As technology continues to evolve, we can expect to see:
     publishedAt: '2025-07-19',
     isPublished: true
 }
+
     // Add more blog posts here as needed
 ];
 
