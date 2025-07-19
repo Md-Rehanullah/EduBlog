@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EduBlog - Educational Content & Student Resources</title>
-     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cors-anywhere.herokuapp.com https://api.jsonbin.io https://jsonbinproxy.netlify.app; script-src 'self' 'unsafe-inline' https://jsonbinproxy.netlify.app; style-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://cors-anywhere.herokuapp.com https://api.jsonbin.io https://jsonbinproxy.netlify.app;">
     <link rel="stylesheet" href="styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -25,7 +24,6 @@
                     <a href="privacy-policy.html" class="nav-link">Privacy</a>
                     <a href="terms-conditions.html" class="nav-link">Terms</a>
                     <a href="sitemap.html" class="nav-link">Sitemap</a>
-                    <a href="dashboard.html" class="nav-link">Dashboard</a>                    
                 </div>
                 
                <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
@@ -89,36 +87,28 @@
     <!-- Content Grid -->
     <section id="content" class="content-section">
         <div class="container">
-            <!-- Loading Indicator -->
-            <div id="content-loading" class="loading-container">
-                <i class="fas fa-spinner fa-spin"></i> Loading content...
-            </div>
-            
             <!-- Blogs Section -->
             <div id="blogs" class="content-category">
                 <h2 class="category-title">Educational Blogs</h2>
                 <div class="content-grid" id="blogs-grid">
-                    <!-- Blog posts will be loaded here -->
+                    <!-- Blog posts will be loaded by JavaScript -->
                 </div>
-                <div class="pagination" id="blogs-pagination"></div>
             </div>
 
             <!-- Stories Section -->
             <div id="stories" class="content-category">
                 <h2 class="category-title">Student Stories</h2>
                 <div class="content-grid" id="stories-grid">
-                    <!-- Story posts will be loaded here -->
+                    <!-- Story posts will be loaded by JavaScript -->
                 </div>
-                <div class="pagination" id="stories-pagination"></div>
             </div>
 
             <!-- News Section -->
             <div id="news" class="content-category">
                 <h2 class="category-title">Education News</h2>
                 <div class="content-grid" id="news-grid">
-                    <!-- News posts will be loaded here -->
+                    <!-- News posts will be loaded by JavaScript -->
                 </div>
-                <div class="pagination" id="news-pagination"></div>
             </div>
         </div>
     </section>
@@ -157,7 +147,6 @@
                 </div>
 
                 <form class="contact-form" id="contact-form">
-                    <input type="hidden" name="csrf_token" id="csrf-token" value="">
                     <div class="form-group">
                         <label for="studentName">Your Name *</label>
                         <input type="text" id="studentName" name="studentName" required>
@@ -238,7 +227,7 @@
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2024 EduBlog. All rights reserved. Built with passion for education.</p>
+                <p>&copy; 2025 EduBlog. All rights reserved. Built with passion for education.</p>
             </div>
         </div>
     </footer>
@@ -270,37 +259,7 @@
         <i class="fas fa-arrow-up"></i>
     </button>
 
-    <!-- Scripts -->
-   <!-- Add this before the closing body tag, replacing any existing script tags -->
-<div id="content-loading" class="loading-container" style="display: none; text-align: center; padding: 20px;">
-    <i class="fas fa-spinner fa-spin"></i> Loading content...
-</div>
-
-<!-- Load scripts in correct order -->
-<script src="cloud-storage.js"></script>
-<script>
-    // Verify CloudStorage is properly loaded
-    if (typeof CloudStorage === 'undefined') {
-        console.error('CloudStorage module failed to initialize properly!');
-        // Create fallback implementation
-        window.CloudStorage = {
-            save: async function(data) {
-                localStorage.setItem('edublog-posts', JSON.stringify(data));
-                return { success: true };
-            },
-            load: async function() {
-                const data = localStorage.getItem('edublog-posts');
-                return data ? JSON.parse(data) : [];
-            }
-        };
-        console.log('Created fallback CloudStorage implementation');
-    } else {
-        console.log('CloudStorage loaded successfully');
-    }
-</script>
-<script src="api.js"></script>
-<script src="script.js"></script>
-
-    
+    <!-- Simple script without all the complexity -->
+    <script src="simple-script.js"></script>
 </body>
 </html>
