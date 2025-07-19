@@ -292,7 +292,19 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <!-- Load post data first (needed for all pages for consistent navigation) -->
+<script src="postuploader.js"></script>
+<!-- Then load main script -->
+<script src="script.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // This ensures the mobile navigation works on all pages
+        console.log('Page initialized with navigation handlers');
+        
+        // No need to display any posts on these pages, but the scripts are still needed
+        // for the mobile navigation to work properly
+    });
+</script>
     <script>
         // Load featured articles in sitemap
         document.addEventListener('DOMContentLoaded', function() {
